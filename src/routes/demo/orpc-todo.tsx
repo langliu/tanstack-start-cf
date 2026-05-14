@@ -24,7 +24,7 @@ function ORPCTodos() {
 
   const [todo, setTodo] = useState('')
   const { mutate: addTodo } = useMutation({
-    mutationFn: orpc.addTodo.call,
+    mutationFn: (input: { name: string }) => orpc.addTodo.call(input),
     onSuccess: () => {
       refetch()
       setTodo('')
@@ -54,6 +54,11 @@ function ORPCTodos() {
               <span className='text-lg text-white'>{t.name}</span>
             </li>
           ))}
+          {data?.length === 0 && (
+            <li className='text-center py-8 text-white/70'>
+              No todos yet. Create one below!
+            </li>
+          )}
         </ul>
         <div className='flex flex-col gap-2'>
           <input
@@ -72,6 +77,7 @@ function ORPCTodos() {
             className='bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors'
             disabled={todo.trim().length === 0}
             onClick={submitTodo}
+            type='button'
           >
             Add todo
           </button>

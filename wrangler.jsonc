@@ -4,13 +4,37 @@
   "compatibility_date": "2026-04-21",
   "compatibility_flags": ["nodejs_compat"],
   "main": "@tanstack/react-start/server-entry",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "tanstack-start-cf-db-staging",
+      "database_id": "ec342998-b510-4019-9a6b-fb450c0980f6",
+      "migrations_dir": "drizzle"
+    }
+  ],
   "env": {
     "staging": {
       "name": "tanstack-start-cf-staging",
-      "vars": { "ENVIRONMENT": "staging" }
+      "vars": { "ENVIRONMENT": "staging" },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "tanstack-start-cf-db-staging",
+          "database_id": "ec342998-b510-4019-9a6b-fb450c0980f6",
+          "migrations_dir": "drizzle"
+        }
+      ]
     },
     "production": {
-      "vars": { "ENVIRONMENT": "production" }
+      "vars": { "ENVIRONMENT": "production" },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "tanstack-start-cf-db",
+          "database_id": "999e9b1b-ebd9-4c1f-9d77-f5705831e3c8",
+          "migrations_dir": "drizzle"
+        }
+      ]
     }
   }
 }

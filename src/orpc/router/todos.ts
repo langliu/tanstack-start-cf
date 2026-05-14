@@ -1,20 +1,39 @@
 import { os } from '@orpc/server'
+import { desc } from 'drizzle-orm'
 import * as z from 'zod'
 
-const todos = [
-  { id: 1, name: 'Get groceries' },
-  { id: 2, name: 'Buy a new phone' },
-  { id: 3, name: 'Finish the project' },
-]
+import { db } from '#/db/index'
+import { todos } from '#/db/schema'
 
-export const listTodos = os.input(z.object({})).handler(() => {
-  return todos
+const AddTodoInputSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+})
+
+export const listTodos = os.input(z.object({})).handler(async () => {
+  const rows = await db.query.todos.findMany({
+    orderBy: [desc(todos.createdAt), desc(todos.id)],
+  })
+
+  return rows.map((todo) => ({
+    id: todo.id,
+    name: todo.title,
+  }))
 })
 
 export const addTodo = os
-  .input(z.object({ name: z.string() }))
-  .handler(({ input }) => {
-    const newTodo = { id: todos.length + 1, name: input.name }
-    todos.push(newTodo)
+  .input(AddTodoInputSchema)
+  .handler(async ({ input }) => {
+    const [newTodo] = await db
+      .insert(todos)
+      .values({ title: input.name })
+      .returning({
+        id: todos.id,
+        name: todos.title,
+      })
+
+    if (!newTodo) {
+      throw new Error('Failed to create todo')
+    }
+
     return newTodo
   })
