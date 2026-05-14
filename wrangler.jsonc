@@ -1,7 +1,16 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "tanstack-start-app",
+  "name": "tanstack-start-cf",
   "compatibility_date": "2026-04-21",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "@tanstack/react-start/server-entry"
+  "main": "@tanstack/react-start/server-entry",
+  "env": {
+    "staging": {
+      "name": "tanstack-start-cf-staging",
+      "vars": { "ENVIRONMENT": "staging" }
+    },
+    "production": {
+      "vars": { "ENVIRONMENT": "production" }
+    }
+  }
 }
