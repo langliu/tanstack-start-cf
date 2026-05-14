@@ -27,6 +27,7 @@ export default function BetterAuthHeader() {
           onClick={() => {
             void authClient.signOut()
           }}
+          type='button'
         >
           Sign out
         </button>

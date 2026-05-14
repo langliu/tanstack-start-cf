@@ -7,6 +7,9 @@ import viteReact, { reactCompilerPreset } from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
 const config = defineConfig({
+  optimizeDeps: {
+    exclude: ['@better-auth/drizzle-adapter', 'better-auth/adapters/drizzle'],
+  },
   plugins: [
     devtools(),
     cloudflare({ viteEnvironment: { name: 'ssr' } }),

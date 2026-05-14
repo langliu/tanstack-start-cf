@@ -61,6 +61,7 @@ function BetterAuthDemo() {
             onClick={() => {
               void authClient.signOut()
             }}
+            type='button'
           >
             Sign out
           </button>
@@ -106,7 +107,7 @@ function BetterAuthDemo() {
           setError(result.error.message || 'Sign in failed')
         }
       }
-    } catch (err) {
+    } catch (_err) {
       setError('An unexpected error occurred')
     } finally {
       setLoading(false)
