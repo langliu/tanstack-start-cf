@@ -1,5 +1,15 @@
 # 项目说明
 
+## 通用规则
+
+- 除非我明确要求部署，否则不要擅自部署到 staging 或 production。
+
+## UI 组件规则
+
+- 优先使用 shadcn/ui 提供的组件（`src/components/ui/`），不要自己实现。
+- 在写 UI 之前先检查 `src/components/ui/` 下是否有可用的组件。
+- 如需新增组件，使用 `npx shadcn@latest add <组件名>` 添加。
+
 ## Cloudflare D1 本地开发
 
 - `bun run dev` 默认使用本地 D1 数据库。

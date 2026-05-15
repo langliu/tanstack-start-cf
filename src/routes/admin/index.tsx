@@ -72,13 +72,19 @@ function LibraryPage() {
   const [uploading, setUploading] = useState(false)
 
   const albumsQuery = useQuery(
-    orpc.admin.albums.list.queryOptions({ input: {} }),
+    orpc.admin.albums.list.queryOptions({
+      input: { limit: 200, offset: 0 },
+    }),
   )
   const tagsQuery = useQuery(
-    orpc.admin.tags.list.queryOptions({ input: {} }),
+    orpc.admin.tags.list.queryOptions({
+      input: { limit: 200, offset: 0 },
+    }),
   )
   const modelsQuery = useQuery(
-    orpc.admin.models.list.queryOptions({ input: {} }),
+    orpc.admin.models.list.queryOptions({
+      input: { limit: 200, offset: 0 },
+    }),
   )
 
   const imagesInput = useMemo(
@@ -140,9 +146,9 @@ function LibraryPage() {
     },
   })
 
-  const albums = albumsQuery.data ?? []
-  const tags = tagsQuery.data ?? []
-  const models = modelsQuery.data ?? []
+  const albums = (albumsQuery.data as { items?: unknown[] } | undefined)?.items ?? []
+  const tags = (tagsQuery.data as { items?: unknown[] } | undefined)?.items ?? []
+  const models = (modelsQuery.data as { items?: unknown[] } | undefined)?.items ?? []
   const imagesData = imagesQuery.data
   const visibleImages = imagesData?.items ?? []
   const selectedImage = selectedImageQuery.data ?? null

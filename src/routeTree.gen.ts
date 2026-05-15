@@ -21,13 +21,15 @@ import { Route as DemoBetterAuthRouteImport } from './routes/demo/better-auth'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
 import { Route as AdminTagsRouteImport } from './routes/admin/tags'
 import { Route as AdminModelsRouteImport } from './routes/admin/models'
-import { Route as AdminAlbumsRouteImport } from './routes/admin/albums'
 import { Route as AdminAgenciesRouteImport } from './routes/admin/agencies'
+import { Route as AdminAlbumsRouteRouteImport } from './routes/admin/albums/route'
+import { Route as AdminAlbumsIndexRouteImport } from './routes/admin/albums/index'
 import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
 import { Route as DemoFormAddressRouteImport } from './routes/demo/form.address'
 import { Route as ApiRpcSplatRouteImport } from './routes/api.rpc.$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiAssetsSplatRouteImport } from './routes/api/assets/$'
+import { Route as AdminAlbumsAlbumIdRouteImport } from './routes/admin/albums/$albumId'
 import { Route as ApiAdminImagesUploadRouteImport } from './routes/api/admin/images/upload'
 
 const AboutRoute = AboutRouteImport.update({
@@ -90,15 +92,20 @@ const AdminModelsRoute = AdminModelsRouteImport.update({
   path: '/models',
   getParentRoute: () => AdminRouteRoute,
 } as any)
-const AdminAlbumsRoute = AdminAlbumsRouteImport.update({
-  id: '/albums',
-  path: '/albums',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
 const AdminAgenciesRoute = AdminAgenciesRouteImport.update({
   id: '/agencies',
   path: '/agencies',
   getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAlbumsRouteRoute = AdminAlbumsRouteRouteImport.update({
+  id: '/albums',
+  path: '/albums',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAlbumsIndexRoute = AdminAlbumsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminAlbumsRouteRoute,
 } as any)
 const DemoFormSimpleRoute = DemoFormSimpleRouteImport.update({
   id: '/demo/form/simple',
@@ -125,6 +132,11 @@ const ApiAssetsSplatRoute = ApiAssetsSplatRouteImport.update({
   path: '/api/assets/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAlbumsAlbumIdRoute = AdminAlbumsAlbumIdRouteImport.update({
+  id: '/$albumId',
+  path: '/$albumId',
+  getParentRoute: () => AdminAlbumsRouteRoute,
+} as any)
 const ApiAdminImagesUploadRoute = ApiAdminImagesUploadRouteImport.update({
   id: '/api/admin/images/upload',
   path: '/api/admin/images/upload',
@@ -135,8 +147,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/admin/albums': typeof AdminAlbumsRouteRouteWithChildren
   '/admin/agencies': typeof AdminAgenciesRoute
-  '/admin/albums': typeof AdminAlbumsRoute
   '/admin/models': typeof AdminModelsRoute
   '/admin/tags': typeof AdminTagsRoute
   '/api/$': typeof ApiSplatRoute
@@ -146,18 +158,19 @@ export interface FileRoutesByFullPath {
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/albums/$albumId': typeof AdminAlbumsAlbumIdRoute
   '/api/assets/$': typeof ApiAssetsSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
+  '/admin/albums/': typeof AdminAlbumsIndexRoute
   '/api/admin/images/upload': typeof ApiAdminImagesUploadRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin/agencies': typeof AdminAgenciesRoute
-  '/admin/albums': typeof AdminAlbumsRoute
   '/admin/models': typeof AdminModelsRoute
   '/admin/tags': typeof AdminTagsRoute
   '/api/$': typeof ApiSplatRoute
@@ -167,11 +180,13 @@ export interface FileRoutesByTo {
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/albums/$albumId': typeof AdminAlbumsAlbumIdRoute
   '/api/assets/$': typeof ApiAssetsSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
+  '/admin/albums': typeof AdminAlbumsIndexRoute
   '/api/admin/images/upload': typeof ApiAdminImagesUploadRoute
 }
 export interface FileRoutesById {
@@ -179,8 +194,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/admin/albums': typeof AdminAlbumsRouteRouteWithChildren
   '/admin/agencies': typeof AdminAgenciesRoute
-  '/admin/albums': typeof AdminAlbumsRoute
   '/admin/models': typeof AdminModelsRoute
   '/admin/tags': typeof AdminTagsRoute
   '/api/$': typeof ApiSplatRoute
@@ -190,11 +205,13 @@ export interface FileRoutesById {
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/albums/$albumId': typeof AdminAlbumsAlbumIdRoute
   '/api/assets/$': typeof ApiAssetsSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
+  '/admin/albums/': typeof AdminAlbumsIndexRoute
   '/api/admin/images/upload': typeof ApiAdminImagesUploadRoute
 }
 export interface FileRouteTypes {
@@ -203,8 +220,8 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/about'
-    | '/admin/agencies'
     | '/admin/albums'
+    | '/admin/agencies'
     | '/admin/models'
     | '/admin/tags'
     | '/api/$'
@@ -214,18 +231,19 @@ export interface FileRouteTypes {
     | '/demo/table'
     | '/demo/tanstack-query'
     | '/admin/'
+    | '/admin/albums/$albumId'
     | '/api/assets/$'
     | '/api/auth/$'
     | '/api/rpc/$'
     | '/demo/form/address'
     | '/demo/form/simple'
+    | '/admin/albums/'
     | '/api/admin/images/upload'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/admin/agencies'
-    | '/admin/albums'
     | '/admin/models'
     | '/admin/tags'
     | '/api/$'
@@ -235,19 +253,21 @@ export interface FileRouteTypes {
     | '/demo/table'
     | '/demo/tanstack-query'
     | '/admin'
+    | '/admin/albums/$albumId'
     | '/api/assets/$'
     | '/api/auth/$'
     | '/api/rpc/$'
     | '/demo/form/address'
     | '/demo/form/simple'
+    | '/admin/albums'
     | '/api/admin/images/upload'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/about'
-    | '/admin/agencies'
     | '/admin/albums'
+    | '/admin/agencies'
     | '/admin/models'
     | '/admin/tags'
     | '/api/$'
@@ -257,11 +277,13 @@ export interface FileRouteTypes {
     | '/demo/table'
     | '/demo/tanstack-query'
     | '/admin/'
+    | '/admin/albums/$albumId'
     | '/api/assets/$'
     | '/api/auth/$'
     | '/api/rpc/$'
     | '/demo/form/address'
     | '/demo/form/simple'
+    | '/admin/albums/'
     | '/api/admin/images/upload'
   fileRoutesById: FileRoutesById
 }
@@ -369,19 +391,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminModelsRouteImport
       parentRoute: typeof AdminRouteRoute
     }
-    '/admin/albums': {
-      id: '/admin/albums'
-      path: '/albums'
-      fullPath: '/admin/albums'
-      preLoaderRoute: typeof AdminAlbumsRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
     '/admin/agencies': {
       id: '/admin/agencies'
       path: '/agencies'
       fullPath: '/admin/agencies'
       preLoaderRoute: typeof AdminAgenciesRouteImport
       parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/albums': {
+      id: '/admin/albums'
+      path: '/albums'
+      fullPath: '/admin/albums'
+      preLoaderRoute: typeof AdminAlbumsRouteRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/albums/': {
+      id: '/admin/albums/'
+      path: '/'
+      fullPath: '/admin/albums/'
+      preLoaderRoute: typeof AdminAlbumsIndexRouteImport
+      parentRoute: typeof AdminAlbumsRouteRoute
     }
     '/demo/form/simple': {
       id: '/demo/form/simple'
@@ -418,6 +447,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAssetsSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/albums/$albumId': {
+      id: '/admin/albums/$albumId'
+      path: '/$albumId'
+      fullPath: '/admin/albums/$albumId'
+      preLoaderRoute: typeof AdminAlbumsAlbumIdRouteImport
+      parentRoute: typeof AdminAlbumsRouteRoute
+    }
     '/api/admin/images/upload': {
       id: '/api/admin/images/upload'
       path: '/api/admin/images/upload'
@@ -428,17 +464,30 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminAlbumsRouteRouteChildren {
+  AdminAlbumsAlbumIdRoute: typeof AdminAlbumsAlbumIdRoute
+  AdminAlbumsIndexRoute: typeof AdminAlbumsIndexRoute
+}
+
+const AdminAlbumsRouteRouteChildren: AdminAlbumsRouteRouteChildren = {
+  AdminAlbumsAlbumIdRoute: AdminAlbumsAlbumIdRoute,
+  AdminAlbumsIndexRoute: AdminAlbumsIndexRoute,
+}
+
+const AdminAlbumsRouteRouteWithChildren =
+  AdminAlbumsRouteRoute._addFileChildren(AdminAlbumsRouteRouteChildren)
+
 interface AdminRouteRouteChildren {
+  AdminAlbumsRouteRoute: typeof AdminAlbumsRouteRouteWithChildren
   AdminAgenciesRoute: typeof AdminAgenciesRoute
-  AdminAlbumsRoute: typeof AdminAlbumsRoute
   AdminModelsRoute: typeof AdminModelsRoute
   AdminTagsRoute: typeof AdminTagsRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminAlbumsRouteRoute: AdminAlbumsRouteRouteWithChildren,
   AdminAgenciesRoute: AdminAgenciesRoute,
-  AdminAlbumsRoute: AdminAlbumsRoute,
   AdminModelsRoute: AdminModelsRoute,
   AdminTagsRoute: AdminTagsRoute,
   AdminIndexRoute: AdminIndexRoute,

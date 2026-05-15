@@ -100,13 +100,27 @@ export async function listLibraryStats() {
   }
 }
 
-export async function listAgencies(input: { q?: string } = {}) {
+export async function listAgencies(
+  input: { limit?: number; offset?: number; q?: string } = {},
+) {
+  const limit = Math.min(input.limit ?? 50, 200)
+  const offset = input.offset ?? 0
   const q = input.q?.trim()
+  const where = q ? like(agencies.name, `%${q}%`) : undefined
 
-  return db.query.agencies.findMany({
+  const items = await db.query.agencies.findMany({
+    limit,
+    offset,
     orderBy: [asc(agencies.name)],
-    where: q ? like(agencies.name, `%${q}%`) : undefined,
+    where,
   })
+
+  const [totalResult] = await db
+    .select({ value: count() })
+    .from(agencies)
+    .where(where)
+
+  return { items, total: totalResult?.value ?? 0, limit, offset }
 }
 
 export async function createAgency(input: {
@@ -174,8 +188,10 @@ export async function deleteAgency(id: string) {
 }
 
 export async function listAlbums(
-  input: { agencyId?: string; q?: string } = {},
+  input: { agencyId?: string; limit?: number; offset?: number; q?: string } = {},
 ) {
+  const limit = Math.min(input.limit ?? 50, 200)
+  const offset = input.offset ?? 0
   const conditions = []
   const q = input.q?.trim()
 
@@ -186,13 +202,24 @@ export async function listAlbums(
     conditions.push(like(albums.name, `%${q}%`))
   }
 
-  return db.query.albums.findMany({
+  const where = conditions.length > 0 ? and(...conditions) : undefined
+
+  const items = await db.query.albums.findMany({
+    limit,
+    offset,
     orderBy: [asc(albums.sortOrder), asc(albums.name)],
-    where: conditions.length > 0 ? and(...conditions) : undefined,
+    where,
     with: {
       agency: true,
     },
   })
+
+  const [totalResult] = await db
+    .select({ value: count() })
+    .from(albums)
+    .where(where)
+
+  return { items, total: totalResult?.value ?? 0, limit, offset }
 }
 
 export async function createAlbum(input: {
@@ -265,13 +292,36 @@ export async function deleteAlbum(id: string) {
   return { id }
 }
 
-export async function listTags(input: { q?: string } = {}) {
-  const q = input.q?.trim()
-
-  return db.query.tags.findMany({
-    orderBy: [asc(tags.name)],
-    where: q ? like(tags.name, `%${q}%`) : undefined,
+export async function getAlbum(id: string) {
+  const [row] = await db.query.albums.findMany({
+    limit: 1,
+    where: eq(albums.id, id),
+    with: { agency: true },
   })
+  return row ?? null
+}
+
+export async function listTags(
+  input: { limit?: number; offset?: number; q?: string } = {},
+) {
+  const limit = Math.min(input.limit ?? 50, 200)
+  const offset = input.offset ?? 0
+  const q = input.q?.trim()
+  const where = q ? like(tags.name, `%${q}%`) : undefined
+
+  const items = await db.query.tags.findMany({
+    limit,
+    offset,
+    orderBy: [asc(tags.name)],
+    where,
+  })
+
+  const [totalResult] = await db
+    .select({ value: count() })
+    .from(tags)
+    .where(where)
+
+  return { items, total: totalResult?.value ?? 0, limit, offset }
 }
 
 export async function createTag(input: {
@@ -332,15 +382,29 @@ export async function deleteTag(id: string) {
   return { id }
 }
 
-export async function listModels(input: { q?: string } = {}) {
+export async function listModels(
+  input: { limit?: number; offset?: number; q?: string } = {},
+) {
+  const limit = Math.min(input.limit ?? 50, 200)
+  const offset = input.offset ?? 0
   const q = input.q?.trim()
+  const where = q
+    ? or(like(models.name, `%${q}%`), like(models.alias, `%${q}%`))
+    : undefined
 
-  return db.query.models.findMany({
+  const items = await db.query.models.findMany({
+    limit,
+    offset,
     orderBy: [asc(models.name)],
-    where: q
-      ? or(like(models.name, `%${q}%`), like(models.alias, `%${q}%`))
-      : undefined,
+    where,
   })
+
+  const [totalResult] = await db
+    .select({ value: count() })
+    .from(models)
+    .where(where)
+
+  return { items, total: totalResult?.value ?? 0, limit, offset }
 }
 
 export async function createModel(input: {

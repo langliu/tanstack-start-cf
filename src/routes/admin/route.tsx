@@ -1,10 +1,10 @@
+import { useQuery } from '@tanstack/react-query'
 import {
   createFileRoute,
   Outlet,
   useLocation,
   useNavigate,
 } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
 import {
   Building2,
   FolderOpen,
@@ -62,7 +62,7 @@ function AdminLayout() {
 
 export function AdminFrame({ children }: { children: React.ReactNode }) {
   return (
-    <main className='fixed inset-0 z-[60] bg-[#191b1f] text-[#ebe7df]'>
+    <main className='fixed inset-0 bg-[#191b1f] text-[#ebe7df]'>
       {children}
     </main>
   )
@@ -125,22 +125,30 @@ function AdminSidebar({ userEmail }: { userEmail: string }) {
     orpc.admin.stats.queryOptions({ input: {} }),
   )
   const albumsQuery = useQuery(
-    orpc.admin.albums.list.queryOptions({ input: {} }),
+    orpc.admin.albums.list.queryOptions({
+      input: { limit: 200, offset: 0 },
+    }),
   )
   const tagsQuery = useQuery(
-    orpc.admin.tags.list.queryOptions({ input: {} }),
+    orpc.admin.tags.list.queryOptions({
+      input: { limit: 200, offset: 0 },
+    }),
   )
   const modelsQuery = useQuery(
-    orpc.admin.models.list.queryOptions({ input: {} }),
+    orpc.admin.models.list.queryOptions({
+      input: { limit: 200, offset: 0 },
+    }),
   )
   const agenciesQuery = useQuery(
-    orpc.admin.agencies.list.queryOptions({ input: {} }),
+    orpc.admin.agencies.list.queryOptions({
+      input: { limit: 200, offset: 0 },
+    }),
   )
 
-  const albums = albumsQuery.data ?? []
-  const tags = tagsQuery.data ?? []
-  const models = modelsQuery.data ?? []
-  const agencies = agenciesQuery.data ?? []
+  const albums = (albumsQuery.data as { items?: unknown[] } | undefined)?.items ?? []
+  const tags = (tagsQuery.data as { items?: unknown[] } | undefined)?.items ?? []
+  const models = (modelsQuery.data as { items?: unknown[] } | undefined)?.items ?? []
+  const agencies = (agenciesQuery.data as { items?: unknown[] } | undefined)?.items ?? []
 
   return (
     <aside className='flex min-h-0 flex-col border-[#333331] border-r bg-[#202125]'>

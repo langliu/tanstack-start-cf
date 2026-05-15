@@ -21,7 +21,10 @@
   "env": {
     "staging": {
       "name": "tanstack-start-cf-staging",
-      "vars": { "ENVIRONMENT": "staging" },
+      "vars": {
+        "ENVIRONMENT": "staging",
+        "BETTER_AUTH_URL": "https://tanstack-start-cf-staging.langliu1216.workers.dev"
+      },
       "d1_databases": [
         {
           "binding": "DB",

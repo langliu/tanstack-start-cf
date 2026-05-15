@@ -14,6 +14,7 @@ import {
   deleteImages,
   deleteModel,
   deleteTag,
+  getAlbum,
   getImageDetail,
   listAgencies,
   listAlbums,
@@ -35,6 +36,8 @@ const UrlTextSchema = z.string().max(1000).nullable().optional()
 const IdsSchema = z.array(IdSchema).min(1).max(500)
 
 const EntityListInputSchema = z.object({
+  limit: z.number().int().min(1).max(200).optional(),
+  offset: z.number().int().min(0).optional(),
   q: z.string().trim().max(120).optional(),
 })
 
@@ -150,6 +153,11 @@ export const admin = {
     delete: adminProcedure
       .input(z.object({ id: IdSchema }))
       .handler(({ input }) => deleteAlbum(input.id)),
+    detail: adminProcedure
+      .input(z.object({ id: IdSchema }))
+      .handler(async ({ input }) =>
+        requireFound(await getAlbum(input.id)),
+      ),
     list: adminProcedure
       .input(AlbumListInputSchema)
       .handler(({ input }) => listAlbums(input)),
