@@ -10,27 +10,45 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as DemoTableRouteImport } from './routes/demo/table'
 import { Route as DemoOrpcTodoRouteImport } from './routes/demo/orpc-todo'
 import { Route as DemoDrizzleRouteImport } from './routes/demo/drizzle'
 import { Route as DemoBetterAuthRouteImport } from './routes/demo/better-auth'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
+import { Route as AdminTagsRouteImport } from './routes/admin/tags'
+import { Route as AdminModelsRouteImport } from './routes/admin/models'
+import { Route as AdminAlbumsRouteImport } from './routes/admin/albums'
+import { Route as AdminAgenciesRouteImport } from './routes/admin/agencies'
 import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
 import { Route as DemoFormAddressRouteImport } from './routes/demo/form.address'
 import { Route as ApiRpcSplatRouteImport } from './routes/api.rpc.$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiAssetsSplatRouteImport } from './routes/api/assets/$'
+import { Route as ApiAdminImagesUploadRouteImport } from './routes/api/admin/images/upload'
 
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
   id: '/demo/tanstack-query',
@@ -62,6 +80,26 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminTagsRoute = AdminTagsRouteImport.update({
+  id: '/tags',
+  path: '/tags',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminModelsRoute = AdminModelsRouteImport.update({
+  id: '/models',
+  path: '/models',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAlbumsRoute = AdminAlbumsRouteImport.update({
+  id: '/albums',
+  path: '/albums',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAgenciesRoute = AdminAgenciesRouteImport.update({
+  id: '/agencies',
+  path: '/agencies',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const DemoFormSimpleRoute = DemoFormSimpleRouteImport.update({
   id: '/demo/form/simple',
   path: '/demo/form/simple',
@@ -82,97 +120,154 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAssetsSplatRoute = ApiAssetsSplatRouteImport.update({
+  id: '/api/assets/$',
+  path: '/api/assets/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminImagesUploadRoute = ApiAdminImagesUploadRouteImport.update({
+  id: '/api/admin/images/upload',
+  path: '/api/admin/images/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/admin/agencies': typeof AdminAgenciesRoute
+  '/admin/albums': typeof AdminAlbumsRoute
+  '/admin/models': typeof AdminModelsRoute
+  '/admin/tags': typeof AdminTagsRoute
   '/api/$': typeof ApiSplatRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/drizzle': typeof DemoDrizzleRoute
   '/demo/orpc-todo': typeof DemoOrpcTodoRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/admin/': typeof AdminIndexRoute
+  '/api/assets/$': typeof ApiAssetsSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
+  '/api/admin/images/upload': typeof ApiAdminImagesUploadRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/admin/agencies': typeof AdminAgenciesRoute
+  '/admin/albums': typeof AdminAlbumsRoute
+  '/admin/models': typeof AdminModelsRoute
+  '/admin/tags': typeof AdminTagsRoute
   '/api/$': typeof ApiSplatRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/drizzle': typeof DemoDrizzleRoute
   '/demo/orpc-todo': typeof DemoOrpcTodoRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/admin': typeof AdminIndexRoute
+  '/api/assets/$': typeof ApiAssetsSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
+  '/api/admin/images/upload': typeof ApiAdminImagesUploadRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/admin/agencies': typeof AdminAgenciesRoute
+  '/admin/albums': typeof AdminAlbumsRoute
+  '/admin/models': typeof AdminModelsRoute
+  '/admin/tags': typeof AdminTagsRoute
   '/api/$': typeof ApiSplatRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/drizzle': typeof DemoDrizzleRoute
   '/demo/orpc-todo': typeof DemoOrpcTodoRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/admin/': typeof AdminIndexRoute
+  '/api/assets/$': typeof ApiAssetsSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
+  '/api/admin/images/upload': typeof ApiAdminImagesUploadRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/about'
+    | '/admin/agencies'
+    | '/admin/albums'
+    | '/admin/models'
+    | '/admin/tags'
     | '/api/$'
     | '/demo/better-auth'
     | '/demo/drizzle'
     | '/demo/orpc-todo'
     | '/demo/table'
     | '/demo/tanstack-query'
+    | '/admin/'
+    | '/api/assets/$'
     | '/api/auth/$'
     | '/api/rpc/$'
     | '/demo/form/address'
     | '/demo/form/simple'
+    | '/api/admin/images/upload'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
+    | '/admin/agencies'
+    | '/admin/albums'
+    | '/admin/models'
+    | '/admin/tags'
     | '/api/$'
     | '/demo/better-auth'
     | '/demo/drizzle'
     | '/demo/orpc-todo'
     | '/demo/table'
     | '/demo/tanstack-query'
+    | '/admin'
+    | '/api/assets/$'
     | '/api/auth/$'
     | '/api/rpc/$'
     | '/demo/form/address'
     | '/demo/form/simple'
+    | '/api/admin/images/upload'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/about'
+    | '/admin/agencies'
+    | '/admin/albums'
+    | '/admin/models'
+    | '/admin/tags'
     | '/api/$'
     | '/demo/better-auth'
     | '/demo/drizzle'
     | '/demo/orpc-todo'
     | '/demo/table'
     | '/demo/tanstack-query'
+    | '/admin/'
+    | '/api/assets/$'
     | '/api/auth/$'
     | '/api/rpc/$'
     | '/demo/form/address'
     | '/demo/form/simple'
+    | '/api/admin/images/upload'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   ApiSplatRoute: typeof ApiSplatRoute
   DemoBetterAuthRoute: typeof DemoBetterAuthRoute
@@ -180,10 +275,12 @@ export interface RootRouteChildren {
   DemoOrpcTodoRoute: typeof DemoOrpcTodoRoute
   DemoTableRoute: typeof DemoTableRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
+  ApiAssetsSplatRoute: typeof ApiAssetsSplatRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiRpcSplatRoute: typeof ApiRpcSplatRoute
   DemoFormAddressRoute: typeof DemoFormAddressRoute
   DemoFormSimpleRoute: typeof DemoFormSimpleRoute
+  ApiAdminImagesUploadRoute: typeof ApiAdminImagesUploadRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -195,12 +292,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/demo/tanstack-query': {
       id: '/demo/tanstack-query'
@@ -244,6 +355,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/tags': {
+      id: '/admin/tags'
+      path: '/tags'
+      fullPath: '/admin/tags'
+      preLoaderRoute: typeof AdminTagsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/models': {
+      id: '/admin/models'
+      path: '/models'
+      fullPath: '/admin/models'
+      preLoaderRoute: typeof AdminModelsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/albums': {
+      id: '/admin/albums'
+      path: '/albums'
+      fullPath: '/admin/albums'
+      preLoaderRoute: typeof AdminAlbumsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/agencies': {
+      id: '/admin/agencies'
+      path: '/agencies'
+      fullPath: '/admin/agencies'
+      preLoaderRoute: typeof AdminAgenciesRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/demo/form/simple': {
       id: '/demo/form/simple'
       path: '/demo/form/simple'
@@ -272,11 +411,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/assets/$': {
+      id: '/api/assets/$'
+      path: '/api/assets/$'
+      fullPath: '/api/assets/$'
+      preLoaderRoute: typeof ApiAssetsSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/images/upload': {
+      id: '/api/admin/images/upload'
+      path: '/api/admin/images/upload'
+      fullPath: '/api/admin/images/upload'
+      preLoaderRoute: typeof ApiAdminImagesUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AdminRouteRouteChildren {
+  AdminAgenciesRoute: typeof AdminAgenciesRoute
+  AdminAlbumsRoute: typeof AdminAlbumsRoute
+  AdminModelsRoute: typeof AdminModelsRoute
+  AdminTagsRoute: typeof AdminTagsRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminAgenciesRoute: AdminAgenciesRoute,
+  AdminAlbumsRoute: AdminAlbumsRoute,
+  AdminModelsRoute: AdminModelsRoute,
+  AdminTagsRoute: AdminTagsRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRouteRoute: AdminRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   ApiSplatRoute: ApiSplatRoute,
   DemoBetterAuthRoute: DemoBetterAuthRoute,
@@ -284,10 +458,12 @@ const rootRouteChildren: RootRouteChildren = {
   DemoOrpcTodoRoute: DemoOrpcTodoRoute,
   DemoTableRoute: DemoTableRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
+  ApiAssetsSplatRoute: ApiAssetsSplatRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiRpcSplatRoute: ApiRpcSplatRoute,
   DemoFormAddressRoute: DemoFormAddressRoute,
   DemoFormSimpleRoute: DemoFormSimpleRoute,
+  ApiAdminImagesUploadRoute: ApiAdminImagesUploadRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

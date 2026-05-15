@@ -8,7 +8,9 @@ const handler = new RPCHandler(router)
 
 async function handle({ request }: { request: Request }) {
   const { response } = await handler.handle(request, {
-    context: {},
+    context: {
+      headers: request.headers,
+    },
     prefix: '/api/rpc',
   })
 

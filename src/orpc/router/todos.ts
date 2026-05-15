@@ -1,26 +1,28 @@
-import { os } from '@orpc/server'
 import { desc } from 'drizzle-orm'
 import * as z from 'zod'
 
 import { db } from '#/db/index'
 import { todos } from '#/db/schema'
+import { publicProcedure } from '#/orpc/context'
 
 const AddTodoInputSchema = z.object({
   name: z.string().trim().min(1).max(200),
 })
 
-export const listTodos = os.input(z.object({})).handler(async () => {
-  const rows = await db.query.todos.findMany({
-    orderBy: [desc(todos.createdAt), desc(todos.id)],
+export const listTodos = publicProcedure
+  .input(z.object({}))
+  .handler(async () => {
+    const rows = await db.query.todos.findMany({
+      orderBy: [desc(todos.createdAt), desc(todos.id)],
+    })
+
+    return rows.map((todo) => ({
+      id: todo.id,
+      name: todo.title,
+    }))
   })
 
-  return rows.map((todo) => ({
-    id: todo.id,
-    name: todo.title,
-  }))
-})
-
-export const addTodo = os
+export const addTodo = publicProcedure
   .input(AddTodoInputSchema)
   .handler(async ({ input }) => {
     const [newTodo] = await db
