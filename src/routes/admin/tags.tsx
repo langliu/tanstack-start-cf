@@ -1,22 +1,37 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { Loader2, Plus, Search, Tags, Trash2 } from 'lucide-react'
+import { Edit, Loader2, Plus, Search, Tags, Trash2 } from 'lucide-react'
 import { useState } from 'react'
-import { orpc } from '#/orpc/client'
 import { Button } from '#/components/ui/button'
 import {
   Drawer,
   DrawerClose,
   DrawerContent,
+  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
 } from '#/components/ui/drawer'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '#/components/ui/table'
+import { orpc } from '#/orpc/client'
 import { invalidateAdminQueries } from './route'
 
 const PAGE_SIZE = 20
+
+type TagRow = {
+  color?: string | null
+  id: string
+  name: string
+}
 
 export const Route = createFileRoute('/admin/tags')({
   component: TagsPage,
@@ -28,6 +43,7 @@ function TagsPage() {
   const [page, setPage] = useState(0)
 
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [editingId, setEditingId] = useState<null | string>(null)
   const [formName, setFormName] = useState('')
   const [formColor, setFormColor] = useState('#73e0d3')
 
@@ -44,9 +60,25 @@ function TagsPage() {
         name: formName,
       }),
     onSuccess: () => {
-      setDrawerOpen(false)
-      setFormName('')
-      setFormColor('#73e0d3')
+      closeDrawer()
+      invalidateAdminQueries(queryClient)
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: () => {
+      if (!editingId) {
+        throw new Error('缺少标签 ID')
+      }
+
+      return orpc.admin.tags.update.call({
+        color: formColor,
+        id: editingId,
+        name: formName,
+      })
+    },
+    onSuccess: () => {
+      closeDrawer()
       invalidateAdminQueries(queryClient)
     },
   })
@@ -58,20 +90,53 @@ function TagsPage() {
 
   const { data, isFetching } = tagsQuery
   const total = (data as { total?: number } | undefined)?.total ?? 0
-  const items = (data as { items?: unknown[] } | undefined)?.items ?? []
+  const items = (data as { items?: TagRow[] } | undefined)?.items ?? []
   const totalPages = Math.ceil(total / PAGE_SIZE)
+  const saveMutation = editingId ? updateMutation : createMutation
+  const drawerTitle = editingId ? '编辑标签' : '新增标签'
+
+  function blurActiveElement() {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
+  }
+
+  function resetForm() {
+    setFormName('')
+    setFormColor('#73e0d3')
+  }
+
+  function openCreate() {
+    blurActiveElement()
+    resetForm()
+    setEditingId(null)
+    setDrawerOpen(true)
+  }
+
+  function openEdit(tag: TagRow) {
+    blurActiveElement()
+    setFormName(tag.name)
+    setFormColor(tag.color || '#73e0d3')
+    setEditingId(tag.id)
+    setDrawerOpen(true)
+  }
+
+  function closeDrawer() {
+    setDrawerOpen(false)
+    setEditingId(null)
+  }
 
   return (
-    <section className='flex min-w-0 flex-col'>
-      <div className='flex min-h-14 items-center gap-3 border-[#333331] border-b bg-[#1d1e22] px-4'>
-        <Tags className='size-5 text-[#73e0d3]' />
+    <section className='flex h-full min-h-0 min-w-0 flex-col'>
+      <div className='flex min-h-14 items-center gap-3 border-b bg-card px-4'>
+        <Tags className='size-5 text-primary' />
         <h1 className='font-semibold text-base'>标签管理</h1>
       </div>
-      <div className='flex shrink-0 items-center gap-3 border-[#333331] border-b bg-[#1d1e22] px-4 py-3'>
+      <div className='flex shrink-0 items-center gap-3 border-b bg-card px-4 py-3'>
         <div className='relative flex-1'>
-          <Search className='pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#777a75]' />
-          <input
-            className='h-9 w-full rounded-md border border-[#383a37] bg-[#17181b] pl-9 pr-3 text-sm text-[#ebe7df] outline-none placeholder:text-[#777a75] focus:border-[#73e0d3]'
+          <Search className='pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground' />
+          <Input
+            className='pl-9'
             onChange={(e) => {
               setQ(e.target.value)
               setPage(0)
@@ -80,13 +145,7 @@ function TagsPage() {
             value={q}
           />
         </div>
-        <Button
-          onClick={() => {
-            setFormName('')
-            setFormColor('#73e0d3')
-            setDrawerOpen(true)
-          }}
-        >
+        <Button onClick={openCreate}>
           <Plus className='size-4' />
           新增
         </Button>
@@ -98,60 +157,67 @@ function TagsPage() {
           </div>
         ) : (
           <>
-            <table className='w-full table-auto'>
-              <thead>
-                <tr className='border-[#333331] border-b text-left text-[#9da19b] text-xs'>
-                  <th className='px-4 py-3 font-medium'>名称</th>
-                  <th className='px-4 py-3 font-medium'>颜色</th>
-                  <th className='w-16 px-4 py-3 font-medium'>操作</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>名称</TableHead>
+                  <TableHead>颜色</TableHead>
+                  <TableHead className='w-24'>操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {items.length === 0 ? (
-                  <tr>
-                    <td
-                      className='px-4 py-12 text-center text-[#777a75] text-sm'
+                  <TableRow>
+                    <TableCell
+                      className='py-12 text-center text-muted-foreground'
                       colSpan={3}
                     >
                       暂无数据
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ) : (
-                  items.map(
-                    (tag: { color?: string | null; id: string; name: string }) => (
-                      <tr
-                        className='border-[#333331] border-b transition-colors hover:bg-[#202125]'
-                        key={tag.id}
-                      >
-                        <td className='max-w-0 px-4 py-3 font-medium text-sm'>
-                          <span className='block truncate'>{tag.name}</span>
-                        </td>
-                        <td className='px-4 py-3'>
-                          {tag.color && (
-                            <span
-                              className='inline-block size-5 rounded-full border border-[#383a37]'
-                              style={{ backgroundColor: tag.color }}
-                            />
-                          )}
-                        </td>
-                        <td className='px-4 py-3'>
-                          <button
-                            className='inline-flex size-8 items-center justify-center rounded-md text-[#ffb7aa] hover:bg-[#352322]'
+                  items.map((tag) => (
+                    <TableRow key={tag.id}>
+                      <TableCell className='max-w-0 font-medium'>
+                        <span className='block truncate'>{tag.name}</span>
+                      </TableCell>
+                      <TableCell>
+                        {tag.color && (
+                          <span
+                            className='inline-block size-5 rounded-full border border-input'
+                            style={{ backgroundColor: tag.color }}
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className='flex items-center gap-1'>
+                          <Button
+                            onClick={() => openEdit(tag)}
+                            size='icon-sm'
+                            title='编辑'
+                            type='button'
+                            variant='ghost'
+                          >
+                            <Edit className='size-4' />
+                          </Button>
+                          <Button
                             onClick={() => deleteMutation.mutate(tag.id)}
+                            size='icon-sm'
                             title='删除'
                             type='button'
+                            variant='ghost'
                           >
                             <Trash2 className='size-4' />
-                          </button>
-                        </td>
-                      </tr>
-                    ),
-                  )
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
                 )}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
             {totalPages > 1 && (
-              <div className='flex items-center justify-center gap-2 border-[#333331] border-t px-4 py-3'>
+              <div className='flex items-center justify-center gap-2 border-t px-4 py-3'>
                 <Button
                   disabled={page === 0}
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
@@ -160,7 +226,7 @@ function TagsPage() {
                 >
                   上一页
                 </Button>
-                <span className='text-[#9da19b] text-sm'>
+                <span className='text-muted-foreground text-sm'>
                   {page + 1} / {totalPages}
                 </span>
                 <Button
@@ -179,17 +245,28 @@ function TagsPage() {
 
       <Drawer
         direction='right'
-        onOpenChange={setDrawerOpen}
+        onOpenChange={(open) => {
+          if (open) {
+            setDrawerOpen(true)
+            return
+          }
+
+          closeDrawer()
+        }}
         open={drawerOpen}
       >
-        <DrawerContent className='border-[#333331] bg-[#1d1e22] text-[#ebe7df]'>
+        <DrawerContent className='border-border bg-card text-card-foreground'>
           <DrawerHeader>
-            <DrawerTitle>新增标签</DrawerTitle>
+            <DrawerTitle>{drawerTitle}</DrawerTitle>
+            <DrawerDescription>
+              创建或编辑图片标签，并设置用于识别的标签颜色。
+            </DrawerDescription>
           </DrawerHeader>
           <div className='flex flex-col gap-4 px-4'>
             <div className='flex flex-col gap-1.5'>
               <Label>名称 *</Label>
               <Input
+                className='bg-background/60'
                 onChange={(e) => setFormName(e.target.value)}
                 placeholder='请输入名称'
                 value={formName}
@@ -199,21 +276,23 @@ function TagsPage() {
               <Label>颜色</Label>
               <div className='flex items-center gap-3'>
                 <Input
-                  className='w-24'
+                  className='w-24 bg-background/60'
                   onChange={(e) => setFormColor(e.target.value)}
                   type='color'
                   value={formColor}
                 />
-                <span className='text-[#9da19b] text-xs'>{formColor}</span>
+                <span className='text-muted-foreground text-xs'>
+                  {formColor}
+                </span>
               </div>
             </div>
           </div>
           <DrawerFooter>
-            {createMutation.isError && (
-              <p className='text-[#ffb7aa] text-xs'>
-                {createMutation.error instanceof Error
-                  ? createMutation.error.message
-                  : '创建失败'}
+            {saveMutation.isError && (
+              <p className='text-destructive text-xs'>
+                {saveMutation.error instanceof Error
+                  ? saveMutation.error.message
+                  : '保存失败'}
               </p>
             )}
             <div className='flex gap-3'>
@@ -222,14 +301,14 @@ function TagsPage() {
               </DrawerClose>
               <Button
                 disabled={
-                  formName.trim().length === 0 || createMutation.isPending
+                  formName.trim().length === 0 || saveMutation.isPending
                 }
-                onClick={() => createMutation.mutate()}
+                onClick={() => saveMutation.mutate()}
               >
-                {createMutation.isPending ? (
+                {saveMutation.isPending ? (
                   <Loader2 className='size-4 animate-spin' />
                 ) : (
-                  '创建'
+                  '保存'
                 )}
               </Button>
             </div>

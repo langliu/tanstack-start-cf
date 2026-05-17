@@ -1,6 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { Edit, FolderOpen, Loader2, Plus, Search, Trash2 } from 'lucide-react'
+import {
+  Edit,
+  FolderOpen,
+  Loader2,
+  Plus,
+  Search,
+  Trash2,
+  X,
+} from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
@@ -13,14 +21,6 @@ import {
   SelectValue,
 } from '#/components/ui/select'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '#/components/ui/table'
-import {
   Sheet,
   SheetClose,
   SheetContent,
@@ -29,6 +29,14 @@ import {
   SheetHeader,
   SheetTitle,
 } from '#/components/ui/sheet'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '#/components/ui/table'
 import { orpc } from '#/orpc/client'
 import { invalidateAdminQueries } from '../route'
 
@@ -42,6 +50,11 @@ type AlbumRow = {
   name: string
   sortOrder: number
   updatedAt: string | number | Date
+}
+
+type AgencyOption = {
+  id: string
+  name: string
 }
 
 export const Route = createFileRoute('/admin/albums/')({
@@ -90,13 +103,18 @@ function AlbumsIndexPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: () =>
-      orpc.admin.albums.update.call({
+    mutationFn: () => {
+      if (!editingId) {
+        throw new Error('缺少专辑 ID')
+      }
+
+      return orpc.admin.albums.update.call({
         agencyId: formAgencyId || null,
-        id: editingId!,
+        id: editingId,
         name: formName,
         sortOrder: Number(formSortOrder) || 0,
-      }),
+      })
+    },
     onSuccess: () => {
       closeDrawer()
       invalidateAdminQueries(queryClient)
@@ -110,10 +128,9 @@ function AlbumsIndexPage() {
 
   const { data, isFetching } = albumsQuery
   const total = (data as { total?: number } | undefined)?.total ?? 0
-  const items = (data as { items?: unknown[] } | undefined)?.items ?? []
-  const agencies = agenciesQuery.data
-    ? ((agenciesQuery.data as { items?: unknown[] }).items ?? agenciesQuery.data)
-    : []
+  const items = (data as { items?: AlbumRow[] } | undefined)?.items ?? []
+  const agencies =
+    (agenciesQuery.data as { items?: AgencyOption[] } | undefined)?.items ?? []
 
   const saveMutation = editingId ? updateMutation : createMutation
   const drawerTitle = editingId ? '编辑专辑' : '新增专辑'
@@ -122,7 +139,7 @@ function AlbumsIndexPage() {
 
   function formatDate(v: string | number | Date) {
     const d = new Date(v)
-    return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('zh-CN')
+    return Number.isNaN(d.getTime()) ? '-' : d.toLocaleDateString('zh-CN')
   }
 
   function resetForm() {
@@ -138,7 +155,6 @@ function AlbumsIndexPage() {
   }
 
   function openEdit(album: AlbumRow) {
-    console.log(album)
     setFormName(album.name)
     setFormAgencyId(album.agencyId ?? '')
     setFormSortOrder(String(album.sortOrder))
@@ -152,16 +168,16 @@ function AlbumsIndexPage() {
   }
 
   return (
-    <section className='flex min-w-0 flex-col'>
-      <div className='flex min-h-14 items-center gap-3 border-[#333331] border-b bg-[#1d1e22] px-4'>
-        <FolderOpen className='size-5 text-[#73e0d3]' />
+    <section className='flex h-full min-h-0 min-w-0 flex-col'>
+      <div className='flex min-h-14 items-center gap-3 border-b bg-card px-4'>
+        <FolderOpen className='size-5 text-primary' />
         <h1 className='font-semibold text-base'>专辑管理</h1>
       </div>
-      <div className='flex shrink-0 items-center gap-3 border-[#333331] border-b bg-[#1d1e22] px-4 py-3'>
+      <div className='flex shrink-0 items-center gap-3 border-b bg-card px-4 py-3'>
         <div className='relative flex-1'>
-          <Search className='pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#777a75]' />
-          <input
-                className='h-9 w-full rounded-md border border-[#383a37] bg-[#17181b] pl-9 pr-3 text-sm text-[#ebe7df] outline-none placeholder:text-[#777a75] focus:border-[#73e0d3]'
+          <Search className='pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground' />
+          <Input
+            className='pl-9'
             onChange={(e) => {
               setQ(e.target.value)
               setPage(0)
@@ -171,7 +187,7 @@ function AlbumsIndexPage() {
           />
         </div>
         <select
-          className='h-9 rounded-md border border-[#383a37] bg-[#17181b] px-3 text-sm text-[#ebe7df] outline-none focus:border-[#73e0d3]'
+          className='h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50'
           onChange={(e) => {
             setAgencyFilter(e.target.value)
             setPage(0)
@@ -180,7 +196,7 @@ function AlbumsIndexPage() {
         >
           <option value=''>全部机构</option>
           {Array.isArray(agencies) &&
-            agencies.map((a: { id: string; name: string }) => (
+            agencies.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}
               </option>
@@ -201,19 +217,19 @@ function AlbumsIndexPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className='text-[#9da19b] text-xs'>名称</TableHead>
-                  <TableHead className='text-[#9da19b] text-xs'>机构</TableHead>
-                  <TableHead className='text-[#9da19b] text-xs'>排序</TableHead>
-                  <TableHead className='text-[#9da19b] text-xs'>创建时间</TableHead>
-                  <TableHead className='text-[#9da19b] text-xs'>更新时间</TableHead>
-                  <TableHead className='w-20 text-[#9da19b] text-xs'>操作</TableHead>
+                  <TableHead>名称</TableHead>
+                  <TableHead>机构</TableHead>
+                  <TableHead>排序</TableHead>
+                  <TableHead>创建时间</TableHead>
+                  <TableHead>更新时间</TableHead>
+                  <TableHead className='w-20'>操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {Array.isArray(items) && items.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      className='py-12 text-center text-[#777a75]'
+                      className='py-12 text-center text-muted-foreground'
                       colSpan={6}
                     >
                       暂无数据
@@ -221,13 +237,12 @@ function AlbumsIndexPage() {
                   </TableRow>
                 ) : (
                   Array.isArray(items) &&
-                  items.map((item) => {
-                    const album = item as AlbumRow
+                  items.map((album) => {
                     return (
                       <TableRow key={album.id}>
                         <TableCell className='max-w-0 font-medium'>
                           <button
-                            className='block max-w-full truncate text-left hover:text-[#73e0d3]'
+                            className='block max-w-full truncate text-left hover:text-primary'
                             onClick={() =>
                               navigate({
                                 params: { albumId: album.id },
@@ -240,36 +255,38 @@ function AlbumsIndexPage() {
                             {album.name}
                           </button>
                         </TableCell>
-                        <TableCell className='text-[#9da19b]'>
+                        <TableCell className='text-muted-foreground'>
                           {album.agency?.name ?? '-'}
                         </TableCell>
-                        <TableCell className='text-[#9da19b]'>
+                        <TableCell className='text-muted-foreground'>
                           {album.sortOrder}
                         </TableCell>
-                        <TableCell className='text-[#9da19b] text-xs'>
+                        <TableCell className='text-muted-foreground text-xs'>
                           {formatDate(album.createdAt)}
                         </TableCell>
-                        <TableCell className='text-[#9da19b] text-xs'>
+                        <TableCell className='text-muted-foreground text-xs'>
                           {formatDate(album.updatedAt)}
                         </TableCell>
                         <TableCell>
                           <div className='flex items-center gap-1'>
-                            <button
-                              className='inline-flex size-8 items-center justify-center rounded-md text-[#9da19b] hover:bg-[#2c302f]'
+                            <Button
                               onClick={() => openEdit(album)}
+                              size='icon-sm'
                               title='编辑'
                               type='button'
+                              variant='ghost'
                             >
                               <Edit className='size-4' />
-                            </button>
-                            <button
-                              className='inline-flex size-8 items-center justify-center rounded-md text-[#ffb7aa] hover:bg-[#352322]'
+                            </Button>
+                            <Button
                               onClick={() => deleteMutation.mutate(album.id)}
+                              size='icon-sm'
                               title='删除'
                               type='button'
+                              variant='ghost'
                             >
                               <Trash2 className='size-4' />
-                            </button>
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -279,7 +296,7 @@ function AlbumsIndexPage() {
               </TableBody>
             </Table>
             {totalPages > 1 && (
-              <div className='flex items-center justify-center gap-2 border-[#333331] border-t px-4 py-3'>
+              <div className='flex items-center justify-center gap-2 border-t px-4 py-3'>
                 <Button
                   disabled={page === 0}
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
@@ -288,7 +305,7 @@ function AlbumsIndexPage() {
                 >
                   上一页
                 </Button>
-                <span className='text-[#9da19b] text-sm'>
+                <span className='text-muted-foreground text-sm'>
                   {page + 1} / {totalPages}
                 </span>
                 <Button
@@ -311,66 +328,97 @@ function AlbumsIndexPage() {
         }}
         open={drawerOpen}
       >
-        <SheetContent className='border-[#333331] bg-[#1d1e22] text-[#ebe7df]' side='right'>
-          <SheetHeader>
-            <SheetTitle>{drawerTitle}</SheetTitle>
-            <SheetDescription />
-          </SheetHeader>
-          <div className='flex flex-col gap-4 px-4'>
-            <div className='flex flex-col gap-1.5'>
-              <Label>名称 *</Label>
-              <Input
-                onChange={(e) => setFormName(e.target.value)}
-                placeholder='请输入名称'
-                value={formName}
-              />
+        <SheetContent
+          className='w-[min(420px,calc(100vw-16px))] gap-0 border-border bg-card p-0 text-card-foreground shadow-2xl sm:max-w-[420px]'
+          showCloseButton={false}
+          side='right'
+        >
+          <SheetHeader className='border-b px-5 py-4'>
+            <div className='flex items-center justify-between gap-4'>
+              <div>
+                <SheetTitle className='text-lg'>{drawerTitle}</SheetTitle>
+                <SheetDescription className='mt-1 text-xs'>
+                  {editingId ? '更新专辑信息和展示排序' : '创建新的图片专辑'}
+                </SheetDescription>
+              </div>
+              <SheetClose asChild>
+                <button
+                  className='inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-accent-foreground'
+                  onClick={closeDrawer}
+                  title='关闭'
+                  type='button'
+                >
+                  <X className='size-5' />
+                </button>
+              </SheetClose>
             </div>
-            <div className='flex flex-col gap-1.5'>
-              <Label>机构</Label>
-              <Select
-                onValueChange={(v) => setFormAgencyId(v)}
-                value={formAgencyId || undefined}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder='无机构' />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.isArray(agencies) &&
-                    agencies.map(
-                      (a: { id: string; name: string }) => (
+          </SheetHeader>
+
+          <div className='min-h-0 flex-1 overflow-y-auto px-5 py-5'>
+            <div className='space-y-5'>
+              <div className='space-y-2'>
+                <Label className='text-sm'>名称 *</Label>
+                <Input
+                  className='h-10 bg-background/60'
+                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder='请输入名称'
+                  value={formName}
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label className='text-sm'>机构</Label>
+                <Select
+                  onValueChange={(v) => setFormAgencyId(v)}
+                  value={formAgencyId || undefined}
+                >
+                  <SelectTrigger className='h-10 w-full bg-background/60'>
+                    <SelectValue placeholder='无机构' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.isArray(agencies) &&
+                      agencies.map((a) => (
                         <SelectItem key={a.id} value={a.id}>
                           {a.name}
                         </SelectItem>
-                      ),
-                    )}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className='flex flex-col gap-1.5'>
-              <Label>排序</Label>
-              <Input
-                onChange={(e) => setFormSortOrder(e.target.value)}
-                placeholder='0'
-                type='number'
-                value={formSortOrder}
-              />
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='space-y-2'>
+                <Label className='text-sm'>排序</Label>
+                <Input
+                  className='h-10 bg-background/60'
+                  onChange={(e) => setFormSortOrder(e.target.value)}
+                  placeholder='0'
+                  type='number'
+                  value={formSortOrder}
+                />
+              </div>
             </div>
           </div>
-          <SheetFooter>
+
+          <SheetFooter className='mt-0 border-t bg-background p-5'>
             {saveMutation.isError && (
-              <p className='text-[#ffb7aa] text-xs'>
+              <p className='rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-destructive text-xs'>
                 {saveMutation.error instanceof Error
                   ? saveMutation.error.message
                   : '保存失败'}
               </p>
             )}
-            <div className='flex gap-3'>
+            <div className='grid grid-cols-2 gap-3'>
               <SheetClose asChild>
-                <Button variant='outline' onClick={closeDrawer}>
+                <Button
+                  className='h-10'
+                  onClick={closeDrawer}
+                  variant='outline'
+                >
                   取消
                 </Button>
               </SheetClose>
               <Button
+                className='h-10'
                 disabled={
                   formName.trim().length === 0 || saveMutation.isPending
                 }

@@ -259,6 +259,35 @@ pre code {
   backdrop-filter: blur(4px);
 }
 
+.admin-shell {
+  --background: #191b1f;
+  --foreground: #ebe7df;
+  --card: #202125;
+  --card-foreground: #ebe7df;
+  --popover: #202125;
+  --popover-foreground: #ebe7df;
+  --primary: #73e0d3;
+  --primary-foreground: #151615;
+  --secondary: #2a2b2e;
+  --secondary-foreground: #e6e2d7;
+  --muted: #25262a;
+  --muted-foreground: #9da19b;
+  --accent: #343436;
+  --accent-foreground: #ffffff;
+  --destructive: #ff8f83;
+  --destructive-foreground: #2b1716;
+  --border: #333331;
+  --input: #383a37;
+  --ring: #73e0d3;
+  --sidebar: #202125;
+  --sidebar-foreground: #e6e2d7;
+  --sidebar-accent: #343436;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #333331;
+  --sidebar-primary: #73e0d3;
+  --sidebar-primary-foreground: #151615;
+}
+
 .feature-card {
   background: linear-gradient(165deg, color-mix(in oklab, var(--surface-strong) 93%, white 7%), var(--surface));
   box-shadow:

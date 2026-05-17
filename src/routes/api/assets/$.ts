@@ -4,7 +4,7 @@ import { createFileRoute } from '@tanstack/react-router'
 async function serveAsset({ request }: { request: Request }) {
   const key = parseAssetKey(request)
 
-  if (!key?.startsWith('images/')) {
+  if (!key || !isPublicAssetKey(key)) {
     return new Response('Not Found', { status: 404 })
   }
 
@@ -20,6 +20,10 @@ async function serveAsset({ request }: { request: Request }) {
   headers.set('cache-control', 'public, max-age=31536000, immutable')
 
   return new Response(object.body, { headers })
+}
+
+function isPublicAssetKey(key: string) {
+  return key.startsWith('images/') || key.startsWith('model-avatars/')
 }
 
 function parseAssetKey(request: Request) {

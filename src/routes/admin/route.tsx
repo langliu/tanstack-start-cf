@@ -14,6 +14,10 @@ import {
   UserRound,
 } from 'lucide-react'
 import { useState } from 'react'
+import { Badge } from '#/components/ui/badge'
+import { Button } from '#/components/ui/button'
+import { Input } from '#/components/ui/input'
+import { Separator } from '#/components/ui/separator'
 import { authClient } from '#/lib/auth-client'
 import { cn } from '#/lib/utils'
 import { orpc } from '#/orpc/client'
@@ -62,7 +66,7 @@ function AdminLayout() {
 
 export function AdminFrame({ children }: { children: React.ReactNode }) {
   return (
-    <main className='fixed inset-0 bg-[#191b1f] text-[#ebe7df]'>
+    <main className='admin-shell fixed inset-0 bg-background text-foreground'>
       {children}
     </main>
   )
@@ -78,14 +82,16 @@ export function ActionButton({
   onClick: () => void
 }) {
   return (
-    <button
-      className='h-8 rounded-md bg-[#2c302f] px-3 text-[#dfe4dc] text-sm hover:bg-[#383d3a] disabled:opacity-40'
+    <Button
+      className='h-8 px-3'
       disabled={disabled}
       onClick={onClick}
+      size='sm'
       type='button'
+      variant='secondary'
     >
       {children}
-    </button>
+    </Button>
   )
 }
 
@@ -99,8 +105,8 @@ export function FieldInput({
   value: string
 }) {
   return (
-    <input
-      className='h-9 min-w-0 rounded-md border border-[#383a37] bg-[#17181b] px-3 text-sm outline-none placeholder:text-[#777a75] focus:border-[#73e0d3]'
+    <Input
+      className='h-9 bg-background/60'
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
       type='text'
@@ -110,7 +116,9 @@ export function FieldInput({
 }
 
 export function invalidateAdminQueries(
-  queryClient: ReturnType<typeof import('@tanstack/react-query').useQueryClient>,
+  queryClient: ReturnType<
+    typeof import('@tanstack/react-query').useQueryClient
+  >,
 ) {
   return queryClient.invalidateQueries()
 }
@@ -121,9 +129,7 @@ function AdminSidebar({ userEmail }: { userEmail: string }) {
   const searchParams = new URLSearchParams(searchStr)
   const currentFilter = searchParams.get('filter') ?? 'all'
 
-  const statsQuery = useQuery(
-    orpc.admin.stats.queryOptions({ input: {} }),
-  )
+  const statsQuery = useQuery(orpc.admin.stats.queryOptions({ input: {} }))
   const albumsQuery = useQuery(
     orpc.admin.albums.list.queryOptions({
       input: { limit: 200, offset: 0 },
@@ -145,31 +151,37 @@ function AdminSidebar({ userEmail }: { userEmail: string }) {
     }),
   )
 
-  const albums = (albumsQuery.data as { items?: unknown[] } | undefined)?.items ?? []
-  const tags = (tagsQuery.data as { items?: unknown[] } | undefined)?.items ?? []
-  const models = (modelsQuery.data as { items?: unknown[] } | undefined)?.items ?? []
-  const agencies = (agenciesQuery.data as { items?: unknown[] } | undefined)?.items ?? []
+  const albums =
+    (albumsQuery.data as { items?: unknown[] } | undefined)?.items ?? []
+  const tags =
+    (tagsQuery.data as { items?: unknown[] } | undefined)?.items ?? []
+  const models =
+    (modelsQuery.data as { items?: unknown[] } | undefined)?.items ?? []
+  const agencies =
+    (agenciesQuery.data as { items?: unknown[] } | undefined)?.items ?? []
 
   return (
-    <aside className='flex min-h-0 flex-col border-[#333331] border-r bg-[#202125]'>
-      <div className='flex h-14 items-center gap-3 border-[#333331] border-b px-4 max-lg:justify-center max-lg:px-2'>
-        <div className='grid size-9 place-items-center rounded-md bg-[#73e0d3] text-[#151615]'>
+    <aside className='flex min-h-0 flex-col border-sidebar-border border-r bg-sidebar text-sidebar-foreground'>
+      <div className='flex h-14 items-center gap-3 border-sidebar-border border-b px-4 max-lg:justify-center max-lg:px-2'>
+        <div className='grid size-9 place-items-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground'>
           <Images className='size-5' />
         </div>
         <div className='min-w-0 max-lg:hidden'>
           <p className='truncate font-semibold text-sm'>图片管理</p>
-          <p className='truncate text-[#a6aaa8] text-xs'>{userEmail}</p>
+          <p className='truncate text-muted-foreground text-xs'>{userEmail}</p>
         </div>
       </div>
 
-      <nav className='flex-1 space-y-5 overflow-y-auto px-3 py-4 max-lg:px-2'>
-        <div className='space-y-1'>
+      <nav className='flex flex-1 flex-col gap-5 overflow-y-auto px-3 py-4 max-lg:px-2'>
+        <div className='flex flex-col gap-1'>
           <SidebarButton
             active={pathname === '/admin' && currentFilter === 'all'}
             count={statsQuery.data?.total}
             icon={<Images />}
             label='全部'
-            onClick={() => navigate({ to: '/admin', search: { filter: 'all' } })}
+            onClick={() =>
+              navigate({ search: { filter: 'all' }, to: '/admin' })
+            }
           />
           <SidebarButton
             active={pathname === '/admin' && currentFilter === 'untagged'}
@@ -177,7 +189,7 @@ function AdminSidebar({ userEmail }: { userEmail: string }) {
             icon={<Tags />}
             label='未标签'
             onClick={() =>
-              navigate({ to: '/admin', search: { filter: 'untagged' } })
+              navigate({ search: { filter: 'untagged' }, to: '/admin' })
             }
           />
           <SidebarButton
@@ -186,12 +198,13 @@ function AdminSidebar({ userEmail }: { userEmail: string }) {
             icon={<FolderOpen />}
             label='未专辑'
             onClick={() =>
-              navigate({ to: '/admin', search: { filter: 'unalbumed' } })
+              navigate({ search: { filter: 'unalbumed' }, to: '/admin' })
             }
           />
         </div>
 
-        <div className='space-y-1 border-[#333331] border-t pt-4'>
+        <Separator />
+        <div className='flex flex-col gap-1'>
           <SidebarButton
             active={pathname === '/admin/albums'}
             count={albums.length}
@@ -242,8 +255,8 @@ function SidebarButton({
   return (
     <button
       className={cn(
-        'flex h-9 w-full items-center gap-2 rounded-md px-3 text-left text-[#c8cbc5] text-sm transition hover:bg-[#2a2b2e] max-lg:justify-center max-lg:px-2',
-        active && 'bg-[#343436] text-white',
+        'flex h-9 w-full items-center gap-2 rounded-md px-3 text-left text-sidebar-foreground text-sm transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground max-lg:justify-center max-lg:px-2',
+        active && 'bg-sidebar-accent text-sidebar-accent-foreground',
       )}
       onClick={onClick}
       title={label}
@@ -252,9 +265,12 @@ function SidebarButton({
       <span className='[&_svg]:size-4'>{icon}</span>
       <span className='min-w-0 flex-1 truncate max-lg:hidden'>{label}</span>
       {count !== undefined && (
-        <span className='text-[#9a9d98] text-xs tabular-nums max-lg:hidden'>
+        <Badge
+          className='h-5 min-w-5 px-1.5 text-[10px] tabular-nums max-lg:hidden'
+          variant='secondary'
+        >
           {count}
-        </span>
+        </Badge>
       )}
     </button>
   )
@@ -288,18 +304,18 @@ function AdminSignIn() {
   }
 
   return (
-    <div className='grid h-full place-items-center bg-[radial-gradient(circle_at_30%_20%,rgba(92,224,198,0.16),transparent_34%),linear-gradient(135deg,#1b1c20,#25211d_55%,#161719)] px-4'>
+    <div className='grid h-full place-items-center bg-background px-4'>
       <form
-        className='w-full max-w-sm rounded-lg border border-[#3a3a36] bg-[#202125]/95 p-5 shadow-2xl'
+        className='w-full max-w-sm rounded-lg border bg-card p-5 text-card-foreground shadow-2xl'
         onSubmit={submit}
       >
         <div className='mb-5 flex items-center gap-3'>
-          <div className='grid size-10 place-items-center rounded-md bg-[#73e0d3] text-[#141515]'>
+          <div className='grid size-10 place-items-center rounded-md bg-primary text-primary-foreground'>
             <Images className='size-5' />
           </div>
           <div>
             <h1 className='font-semibold text-lg leading-none'>后台登录</h1>
-            <p className='mt-1 text-[#a8aaa8] text-xs'>
+            <p className='mt-1 text-muted-foreground text-xs'>
               {isSignUp ? '创建管理员账号' : '进入图片管理'}
             </p>
           </div>
@@ -307,9 +323,9 @@ function AdminSignIn() {
 
         <div className='grid gap-3'>
           {isSignUp && (
-            <input
+            <Input
               autoComplete='name'
-              className='h-10 rounded-md border border-[#3b3c3b] bg-[#17181b] px-3 text-sm outline-none focus:border-[#73e0d3]'
+              className='h-10 bg-background/60'
               onChange={(event) => setName(event.target.value)}
               placeholder='名称'
               required
@@ -317,18 +333,18 @@ function AdminSignIn() {
               value={name}
             />
           )}
-          <input
+          <Input
             autoComplete='email'
-            className='h-10 rounded-md border border-[#3b3c3b] bg-[#17181b] px-3 text-sm outline-none focus:border-[#73e0d3]'
+            className='h-10 bg-background/60'
             onChange={(event) => setEmail(event.target.value)}
             placeholder='Email'
             required
             type='email'
             value={email}
           />
-          <input
+          <Input
             autoComplete={isSignUp ? 'new-password' : 'current-password'}
-            className='h-10 rounded-md border border-[#3b3c3b] bg-[#17181b] px-3 text-sm outline-none focus:border-[#73e0d3]'
+            className='h-10 bg-background/60'
             minLength={8}
             onChange={(event) => setPassword(event.target.value)}
             placeholder='Password'
@@ -339,29 +355,26 @@ function AdminSignIn() {
         </div>
 
         {error && (
-          <p className='mt-3 rounded-md border border-[#74403d] bg-[#321f20] px-3 py-2 text-[#ffb6ad] text-sm'>
+          <p className='mt-3 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-destructive text-sm'>
             {error}
           </p>
         )}
 
-        <button
-          className='mt-4 inline-flex h-10 w-full items-center justify-center rounded-md bg-[#73e0d3] font-semibold text-[#151615] text-sm transition hover:bg-[#8bece0] disabled:opacity-60'
-          disabled={loading}
-          type='submit'
-        >
+        <Button className='mt-4 h-10 w-full' disabled={loading} type='submit'>
           {loading ? <Loader2 className='size-4 animate-spin' /> : null}
           {isSignUp ? '创建账号' : '登录'}
-        </button>
-        <button
-          className='mt-3 w-full text-[#a8aaa8] text-xs hover:text-[#ebe7df]'
+        </Button>
+        <Button
+          className='mt-3 w-full'
           onClick={() => {
             setError('')
             setIsSignUp((value) => !value)
           }}
           type='button'
+          variant='ghost'
         >
           {isSignUp ? '已有账号，去登录' : '没有账号，创建一个'}
-        </button>
+        </Button>
       </form>
     </div>
   )

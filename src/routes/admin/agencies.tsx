@@ -1,22 +1,37 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { Building2, Loader2, Plus, Search, Trash2 } from 'lucide-react'
+import { Building2, Edit, Loader2, Plus, Search, Trash2 } from 'lucide-react'
 import { useState } from 'react'
-import { orpc } from '#/orpc/client'
 import { Button } from '#/components/ui/button'
 import {
   Drawer,
   DrawerClose,
   DrawerContent,
+  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
 } from '#/components/ui/drawer'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '#/components/ui/table'
+import { orpc } from '#/orpc/client'
 import { invalidateAdminQueries } from './route'
 
 const PAGE_SIZE = 20
+
+type AgencyRow = {
+  id: string
+  name: string
+  websiteUrl?: string | null
+}
 
 export const Route = createFileRoute('/admin/agencies')({
   component: AgenciesPage,
@@ -28,6 +43,7 @@ function AgenciesPage() {
   const [page, setPage] = useState(0)
 
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [editingId, setEditingId] = useState<null | string>(null)
   const [formName, setFormName] = useState('')
   const [formWebsiteUrl, setFormWebsiteUrl] = useState('')
 
@@ -51,6 +67,24 @@ function AgenciesPage() {
     },
   })
 
+  const updateMutation = useMutation({
+    mutationFn: () => {
+      if (!editingId) {
+        throw new Error('缺少机构 ID')
+      }
+
+      return orpc.admin.agencies.update.call({
+        id: editingId,
+        name: formName,
+        websiteUrl: formWebsiteUrl || null,
+      })
+    },
+    onSuccess: () => {
+      closeDrawer()
+      invalidateAdminQueries(queryClient)
+    },
+  })
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => orpc.admin.agencies.delete.call({ id }),
     onSuccess: () => invalidateAdminQueries(queryClient),
@@ -58,20 +92,53 @@ function AgenciesPage() {
 
   const { data, isFetching } = agenciesQuery
   const total = (data as { total?: number } | undefined)?.total ?? 0
-  const items = (data as { items?: unknown[] } | undefined)?.items ?? []
+  const items = (data as { items?: AgencyRow[] } | undefined)?.items ?? []
   const totalPages = Math.ceil(total / PAGE_SIZE)
+  const saveMutation = editingId ? updateMutation : createMutation
+  const drawerTitle = editingId ? '编辑机构' : '新增机构'
+
+  function blurActiveElement() {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
+  }
+
+  function resetForm() {
+    setFormName('')
+    setFormWebsiteUrl('')
+  }
+
+  function openCreate() {
+    blurActiveElement()
+    resetForm()
+    setEditingId(null)
+    setDrawerOpen(true)
+  }
+
+  function openEdit(agency: AgencyRow) {
+    blurActiveElement()
+    setFormName(agency.name)
+    setFormWebsiteUrl(agency.websiteUrl ?? '')
+    setEditingId(agency.id)
+    setDrawerOpen(true)
+  }
+
+  function closeDrawer() {
+    setDrawerOpen(false)
+    setEditingId(null)
+  }
 
   return (
-    <section className='flex min-w-0 flex-col'>
-      <div className='flex min-h-14 items-center gap-3 border-[#333331] border-b bg-[#1d1e22] px-4'>
-        <Building2 className='size-5 text-[#73e0d3]' />
+    <section className='flex h-full min-h-0 min-w-0 flex-col'>
+      <div className='flex min-h-14 items-center gap-3 border-b bg-card px-4'>
+        <Building2 className='size-5 text-primary' />
         <h1 className='font-semibold text-base'>机构管理</h1>
       </div>
-      <div className='flex shrink-0 items-center gap-3 border-[#333331] border-b bg-[#1d1e22] px-4 py-3'>
+      <div className='flex shrink-0 items-center gap-3 border-b bg-card px-4 py-3'>
         <div className='relative flex-1'>
-          <Search className='pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#777a75]' />
-          <input
-            className='h-9 w-full rounded-md border border-[#383a37] bg-[#17181b] pl-9 pr-3 text-sm text-[#ebe7df] outline-none placeholder:text-[#777a75] focus:border-[#73e0d3]'
+          <Search className='pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground' />
+          <Input
+            className='pl-9'
             onChange={(e) => {
               setQ(e.target.value)
               setPage(0)
@@ -80,13 +147,7 @@ function AgenciesPage() {
             value={q}
           />
         </div>
-        <Button
-          onClick={() => {
-            setFormName('')
-            setFormWebsiteUrl('')
-            setDrawerOpen(true)
-          }}
-        >
+        <Button onClick={openCreate}>
           <Plus className='size-4' />
           新增
         </Button>
@@ -98,55 +159,62 @@ function AgenciesPage() {
           </div>
         ) : (
           <>
-            <table className='w-full table-auto'>
-              <thead>
-                <tr className='border-[#333331] border-b text-left text-[#9da19b] text-xs'>
-                  <th className='px-4 py-3 font-medium'>名称</th>
-                  <th className='px-4 py-3 font-medium'>网址</th>
-                  <th className='w-16 px-4 py-3 font-medium'>操作</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>名称</TableHead>
+                  <TableHead>网址</TableHead>
+                  <TableHead className='w-24'>操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {items.length === 0 ? (
-                  <tr>
-                    <td
-                      className='px-4 py-12 text-center text-[#777a75] text-sm'
+                  <TableRow>
+                    <TableCell
+                      className='py-12 text-center text-muted-foreground'
                       colSpan={3}
                     >
                       暂无数据
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ) : (
-                  items.map(
-                    (agency: { id: string; name: string; websiteUrl?: string | null }) => (
-                      <tr
-                        className='border-[#333331] border-b transition-colors hover:bg-[#202125]'
-                        key={agency.id}
-                      >
-                        <td className='max-w-0 px-4 py-3 font-medium text-sm'>
-                          <span className='block truncate'>{agency.name}</span>
-                        </td>
-                        <td className='max-w-48 truncate px-4 py-3 text-[#9da19b] text-sm'>
-                          {agency.websiteUrl ?? '-'}
-                        </td>
-                        <td className='px-4 py-3'>
-                          <button
-                            className='inline-flex size-8 items-center justify-center rounded-md text-[#ffb7aa] hover:bg-[#352322]'
+                  items.map((agency) => (
+                    <TableRow key={agency.id}>
+                      <TableCell className='max-w-0 font-medium'>
+                        <span className='block truncate'>{agency.name}</span>
+                      </TableCell>
+                      <TableCell className='max-w-48 truncate text-muted-foreground'>
+                        {agency.websiteUrl ?? '-'}
+                      </TableCell>
+                      <TableCell>
+                        <div className='flex items-center gap-1'>
+                          <Button
+                            onClick={() => openEdit(agency)}
+                            size='icon-sm'
+                            title='编辑'
+                            type='button'
+                            variant='ghost'
+                          >
+                            <Edit className='size-4' />
+                          </Button>
+                          <Button
                             onClick={() => deleteMutation.mutate(agency.id)}
+                            size='icon-sm'
                             title='删除'
                             type='button'
+                            variant='ghost'
                           >
                             <Trash2 className='size-4' />
-                          </button>
-                        </td>
-                      </tr>
-                    ),
-                  )
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
                 )}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
             {totalPages > 1 && (
-              <div className='flex items-center justify-center gap-2 border-[#333331] border-t px-4 py-3'>
+              <div className='flex items-center justify-center gap-2 border-t px-4 py-3'>
                 <Button
                   disabled={page === 0}
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
@@ -155,7 +223,7 @@ function AgenciesPage() {
                 >
                   上一页
                 </Button>
-                <span className='text-[#9da19b] text-sm'>
+                <span className='text-muted-foreground text-sm'>
                   {page + 1} / {totalPages}
                 </span>
                 <Button
@@ -174,17 +242,28 @@ function AgenciesPage() {
 
       <Drawer
         direction='right'
-        onOpenChange={setDrawerOpen}
+        onOpenChange={(open) => {
+          if (open) {
+            setDrawerOpen(true)
+            return
+          }
+
+          closeDrawer()
+        }}
         open={drawerOpen}
       >
-        <DrawerContent className='border-[#333331] bg-[#1d1e22] text-[#ebe7df]'>
+        <DrawerContent className='border-border bg-card text-card-foreground'>
           <DrawerHeader>
-            <DrawerTitle>新增机构</DrawerTitle>
+            <DrawerTitle>{drawerTitle}</DrawerTitle>
+            <DrawerDescription>
+              维护机构名称和官网地址，用于专辑归属和筛选。
+            </DrawerDescription>
           </DrawerHeader>
           <div className='flex flex-col gap-4 px-4'>
             <div className='flex flex-col gap-1.5'>
               <Label>名称 *</Label>
               <Input
+                className='bg-background/60'
                 onChange={(e) => setFormName(e.target.value)}
                 placeholder='请输入名称'
                 value={formName}
@@ -193,6 +272,7 @@ function AgenciesPage() {
             <div className='flex flex-col gap-1.5'>
               <Label>网址</Label>
               <Input
+                className='bg-background/60'
                 onChange={(e) => setFormWebsiteUrl(e.target.value)}
                 placeholder='https://'
                 value={formWebsiteUrl}
@@ -200,11 +280,11 @@ function AgenciesPage() {
             </div>
           </div>
           <DrawerFooter>
-            {createMutation.isError && (
-              <p className='text-[#ffb7aa] text-xs'>
-                {createMutation.error instanceof Error
-                  ? createMutation.error.message
-                  : '创建失败'}
+            {saveMutation.isError && (
+              <p className='text-destructive text-xs'>
+                {saveMutation.error instanceof Error
+                  ? saveMutation.error.message
+                  : '保存失败'}
               </p>
             )}
             <div className='flex gap-3'>
@@ -213,14 +293,14 @@ function AgenciesPage() {
               </DrawerClose>
               <Button
                 disabled={
-                  formName.trim().length === 0 || createMutation.isPending
+                  formName.trim().length === 0 || saveMutation.isPending
                 }
-                onClick={() => createMutation.mutate()}
+                onClick={() => saveMutation.mutate()}
               >
-                {createMutation.isPending ? (
+                {saveMutation.isPending ? (
                   <Loader2 className='size-4 animate-spin' />
                 ) : (
-                  '创建'
+                  '保存'
                 )}
               </Button>
             </div>

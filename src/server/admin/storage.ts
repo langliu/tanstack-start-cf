@@ -75,6 +75,18 @@ export async function storeUploadObjects(input: {
   } satisfies StoredUploadObjects
 }
 
+export async function storeModelAvatarObject(input: {
+  file: File
+  modelId?: string
+}) {
+  assertImageFile(input.file, 'Model avatar')
+
+  return storeImageObject({
+    file: input.file,
+    key: createModelAvatarKey(input.modelId ?? crypto.randomUUID(), input.file),
+  })
+}
+
 async function storeImageObject(input: {
   file: File
   key: string
@@ -107,6 +119,12 @@ function createThumbnailKey(imageId: string, file: File) {
   const stem = filenameStem(safeFilename(file.name))
   const extension = extensionFromContentType(file.type)
   return `images/${imageId}/thumbnail/${stem}.${extension}`
+}
+
+function createModelAvatarKey(modelId: string, file: File) {
+  const stem = filenameStem(safeFilename(file.name))
+  const extension = extensionFromContentType(file.type)
+  return `model-avatars/${modelId}/${stem}.${extension}`
 }
 
 async function sha256Hex(bytes: ArrayBuffer) {

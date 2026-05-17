@@ -1,21 +1,36 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import {
+  Check,
   CheckSquare,
-  FolderOpen,
   ImageIcon,
   ImageOff,
   Link2,
   Loader2,
+  Plus,
   Search,
-  Square,
   Star,
-  Tags,
   Trash2,
   Upload,
   X,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Badge } from '#/components/ui/badge'
+import { Button } from '#/components/ui/button'
+import { Checkbox } from '#/components/ui/checkbox'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '#/components/ui/dialog'
+import { Input } from '#/components/ui/input'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '#/components/ui/popover'
+import { Separator } from '#/components/ui/separator'
 import { cn } from '#/lib/utils'
 import { orpc } from '#/orpc/client'
 import { ActionButton, invalidateAdminQueries } from './route'
@@ -46,11 +61,51 @@ type ImageGridItem = {
   fileSize: number
   height: null | number
   id: string
+  originalUrl: string
   originalFilename: string
   thumbnailUrl: string
   title: string
   width: null | number
 }
+
+type NamedOption = {
+  id: string
+  name: string
+}
+
+type ImageDetail = {
+  albumId: null | string
+  contentType: string
+  createdAt: Date | number | string
+  exif: null | Record<string, unknown>
+  fileSize: number
+  height: null | number
+  id: string
+  models: NamedOption[]
+  note: null | string
+  originalFilename: string
+  originalUrl: string
+  rating: number
+  sourceUrl: null | string
+  tags: NamedOption[]
+  thumbnailUrl: string
+  title: string
+  uploadedAt: Date | number | string
+  width: null | number
+}
+
+type ImageSaveInput = {
+  albumId?: null | string
+  id: string
+  modelIds?: string[]
+  note?: null | string
+  rating?: number
+  sourceUrl?: null | string
+  tagIds?: string[]
+  title?: string
+}
+
+type ImageSavePatch = Partial<Omit<ImageSaveInput, 'id'>>
 
 const FILTER_TABS: { key: LibraryFilter; label: string }[] = [
   { key: 'all', label: '全部' },
@@ -66,6 +121,7 @@ function LibraryPage() {
   const [bulkModelId, setBulkModelId] = useState('')
   const [bulkTagId, setBulkTagId] = useState('')
   const [query, setQuery] = useState('')
+  const [previewImage, setPreviewImage] = useState<ImageGridItem | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState('')
@@ -146,9 +202,12 @@ function LibraryPage() {
     },
   })
 
-  const albums = (albumsQuery.data as { items?: unknown[] } | undefined)?.items ?? []
-  const tags = (tagsQuery.data as { items?: unknown[] } | undefined)?.items ?? []
-  const models = (modelsQuery.data as { items?: unknown[] } | undefined)?.items ?? []
+  const albums =
+    (albumsQuery.data as { items?: NamedOption[] } | undefined)?.items ?? []
+  const tags =
+    (tagsQuery.data as { items?: NamedOption[] } | undefined)?.items ?? []
+  const models =
+    (modelsQuery.data as { items?: NamedOption[] } | undefined)?.items ?? []
   const imagesData = imagesQuery.data
   const visibleImages = imagesData?.items ?? []
   const selectedImage = selectedImageQuery.data ?? null
@@ -222,33 +281,30 @@ function LibraryPage() {
   }
 
   return (
-    <section className='flex min-w-0 flex-col'>
-      <div className='flex min-h-14 items-center gap-2 border-[#333331] border-b bg-[#1d1e22] px-4'>
+    <section className='flex h-full min-h-0 min-w-0 flex-col'>
+      <div className='flex min-h-14 items-center gap-2 border-b bg-card px-4'>
         <div className='flex items-center gap-1'>
           {FILTER_TABS.map((tab) => (
-            <button
-              className={cn(
-                'h-7 rounded-md px-2.5 text-sm transition',
-                activeFilter === tab.key
-                  ? 'bg-[#73e0d3] font-semibold text-[#151615]'
-                  : 'text-[#c8cbc5] hover:bg-[#2a2b2e]',
-              )}
+            <Button
               key={tab.key}
               onClick={() =>
                 navigate({
-                  search: (prev) => ({ ...prev, filter: tab.key }),
+                  search: { filter: tab.key },
+                  to: '/admin',
                 })
               }
+              size='sm'
               type='button'
+              variant={activeFilter === tab.key ? 'default' : 'ghost'}
             >
               {tab.label}
-            </button>
+            </Button>
           ))}
         </div>
         <div className='relative min-w-0 flex-1'>
-          <Search className='-translate-y-1/2 pointer-events-none absolute top-1/2 left-3 size-4 text-[#878a86]' />
-          <input
-            className='h-9 w-full rounded-md border border-[#343631] bg-[#151619] pr-3 pl-9 text-sm outline-none placeholder:text-[#777a75] focus:border-[#73e0d3]'
+          <Search className='-translate-y-1/2 pointer-events-none absolute top-1/2 left-3 size-4 text-muted-foreground' />
+          <Input
+            className='h-9 bg-background/60 pr-3 pl-9'
             onChange={(event) => setQuery(event.target.value)}
             placeholder='搜索'
             type='search'
@@ -257,7 +313,7 @@ function LibraryPage() {
         </div>
         <label
           className={cn(
-            'inline-flex h-9 cursor-pointer items-center gap-2 rounded-md bg-[#73e0d3] px-3 font-semibold text-[#151615] text-sm transition hover:bg-[#8bece0]',
+            'inline-flex h-9 cursor-pointer items-center gap-2 rounded-md bg-primary px-3 font-medium text-primary-foreground text-sm transition hover:bg-primary/90',
             uploading && 'pointer-events-none opacity-60',
           )}
           htmlFor='admin-image-upload'
@@ -324,7 +380,7 @@ function LibraryPage() {
         tags={tags}
       />
       {uploadError ? (
-        <div className='border-[#4b3734] border-b bg-[#2a1f1f] px-4 py-2 text-[#ffb7aa] text-sm'>
+        <div className='border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-destructive text-sm'>
           {uploadError}
         </div>
       ) : null}
@@ -334,6 +390,7 @@ function LibraryPage() {
           images={visibleImages}
           loading={imagesQuery.isLoading}
           onFocus={setSelectedImageId}
+          onPreview={setPreviewImage}
           onToggle={toggleImage}
           selectedIds={selectedIds}
           selectedImageId={selectedImageId}
@@ -347,6 +404,14 @@ function LibraryPage() {
           tags={tags}
         />
       </div>
+      <ImagePreviewDialog
+        image={previewImage}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPreviewImage(null)
+          }
+        }}
+      />
     </section>
   )
 }
@@ -389,21 +454,17 @@ function BulkToolbar({
   tags: Array<{ id: string; name: string }>
 }) {
   return (
-    <div className='flex min-h-12 items-center gap-2 overflow-x-auto border-[#333331] border-b bg-[#191a1d] px-4 text-sm'>
-      <button
-        className='inline-flex h-8 items-center gap-2 rounded-md border border-[#383a37] px-2 text-[#d7d6cf] hover:bg-[#25262a]'
-        onClick={onSelectAll}
-        type='button'
-      >
+    <div className='flex min-h-12 items-center gap-2 overflow-x-auto border-b bg-background px-4 text-sm'>
+      <Button onClick={onSelectAll} size='sm' type='button' variant='outline'>
         <CheckSquare className='size-4' />
         全选
-      </button>
-      <span className='whitespace-nowrap text-[#a6aaa8]'>
+      </Button>
+      <Badge className='whitespace-nowrap' variant='secondary'>
         已选 {selectedCount}
-      </span>
+      </Badge>
 
       <select
-        className='h-8 min-w-32 rounded-md border border-[#383a37] bg-[#151619] px-2 text-sm outline-none'
+        className='h-8 min-w-32 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50'
         onChange={(event) => setTagId(event.target.value)}
         value={tagId}
       >
@@ -419,7 +480,7 @@ function BulkToolbar({
       </ActionButton>
 
       <select
-        className='h-8 min-w-32 rounded-md border border-[#383a37] bg-[#151619] px-2 text-sm outline-none'
+        className='h-8 min-w-32 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50'
         onChange={(event) => setAlbumId(event.target.value)}
         value={albumId}
       >
@@ -435,7 +496,7 @@ function BulkToolbar({
       </ActionButton>
 
       <select
-        className='h-8 min-w-32 rounded-md border border-[#383a37] bg-[#151619] px-2 text-sm outline-none'
+        className='h-8 min-w-32 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50'
         onChange={(event) => setModelId(event.target.value)}
         value={modelId}
       >
@@ -450,24 +511,27 @@ function BulkToolbar({
         关联
       </ActionButton>
 
-      <button
-        className='ml-auto inline-flex h-8 items-center gap-2 rounded-md px-2 text-[#ffb7aa] hover:bg-[#352322] disabled:opacity-40'
+      <Button
+        className='ml-auto'
         disabled={disabled}
         onClick={onDelete}
+        size='sm'
         type='button'
+        variant='ghost'
       >
         <Trash2 className='size-4' />
         删除
-      </button>
-      <button
-        className='inline-flex size-8 items-center justify-center rounded-md text-[#a6aaa8] hover:bg-[#25262a] disabled:opacity-40'
+      </Button>
+      <Button
         disabled={disabled}
         onClick={onClear}
+        size='icon-sm'
         title='清除选择'
         type='button'
+        variant='ghost'
       >
         <X className='size-4' />
-      </button>
+      </Button>
     </div>
   )
 }
@@ -476,6 +540,7 @@ function ImageGrid({
   images,
   loading,
   onFocus,
+  onPreview,
   onToggle,
   selectedIds,
   selectedImageId,
@@ -483,6 +548,7 @@ function ImageGrid({
   images: ImageGridItem[]
   loading: boolean
   onFocus: (id: string) => void
+  onPreview: (image: ImageGridItem) => void
   onToggle: (id: string) => void
   selectedIds: Set<string>
   selectedImageId: null | string
@@ -490,7 +556,7 @@ function ImageGrid({
   if (loading) {
     return (
       <div className='grid flex-1 place-items-center'>
-        <Loader2 className='size-7 animate-spin text-[#73e0d3]' />
+        <Loader2 className='size-7 animate-spin text-primary' />
       </div>
     )
   }
@@ -499,8 +565,8 @@ function ImageGrid({
     return (
       <div className='grid flex-1 place-items-center text-center'>
         <div>
-          <ImageOff className='mx-auto mb-3 size-10 text-[#6f736e]' />
-          <p className='font-medium text-[#d7d6cf]'>暂无图片</p>
+          <ImageOff className='mx-auto mb-3 size-10 text-muted-foreground' />
+          <p className='font-medium'>暂无图片</p>
         </div>
       </div>
     )
@@ -508,19 +574,20 @@ function ImageGrid({
 
   return (
     <div className='min-h-0 overflow-y-auto p-4'>
-      <div className='w-full columns-1 gap-4 sm:columns-2 lg:columns-3 2xl:columns-4 min-[1800px]:columns-5 min-[2200px]:columns-6'>
+      <div className='w-full columns-2 gap-3 md:columns-3 lg:columns-5 xl:columns-6 2xl:columns-7 min-[1800px]:columns-8 min-[2200px]:columns-9'>
         {images.map((image) => (
           <article
             className={cn(
-              'group mb-4 break-inside-avoid rounded-md border border-[#343631] bg-[#202125] p-1 transition hover:border-[#656860]',
-              selectedImageId === image.id && 'border-[#73e0d3]',
+              'group mb-3 break-inside-avoid rounded-md border bg-card p-1 transition hover:border-ring',
+              selectedImageId === image.id && 'border-primary',
             )}
             key={image.id}
           >
             <div className='relative'>
               <button
-                className='block w-full overflow-hidden rounded bg-[#151619]'
+                className='block w-full overflow-hidden rounded bg-background'
                 onClick={() => onFocus(image.id)}
+                onDoubleClick={() => onPreview(image)}
                 type='button'
               >
                 <img
@@ -529,32 +596,28 @@ function ImageGrid({
                   loading='lazy'
                   src={image.thumbnailUrl}
                 />
-                <span className='absolute top-2 left-2 rounded bg-black/60 px-1.5 py-0.5 font-semibold text-[10px] text-white uppercase'>
+                <Badge
+                  className='absolute top-2 left-2 uppercase'
+                  variant='secondary'
+                >
                   {fileExtension(image.originalFilename)}
-                </span>
+                </Badge>
               </button>
-              <button
-                className='absolute top-2 right-2 text-white drop-shadow'
+              <Checkbox
+                checked={selectedIds.has(image.id)}
+                className='absolute top-2 right-2 bg-background/80 opacity-0 shadow transition group-hover:opacity-100 data-[state=checked]:opacity-100'
                 onClick={() => onToggle(image.id)}
                 title='选择图片'
-                type='button'
-              >
-                {selectedIds.has(image.id) ? (
-                  <CheckSquare className='size-5 text-[#73e0d3]' />
-                ) : (
-                  <Square className='size-5 opacity-0 transition group-hover:opacity-100' />
-                )}
-              </button>
+              />
             </div>
             <button
               className='block w-full px-1.5 pt-2 pb-1 text-left'
               onClick={() => onFocus(image.id)}
+              onDoubleClick={() => onPreview(image)}
               type='button'
             >
-              <p className='truncate font-medium text-[#e8e5dc] text-sm'>
-                {image.title}
-              </p>
-              <p className='truncate text-[#9da19b] text-xs'>
+              <p className='truncate font-medium text-sm'>{image.title}</p>
+              <p className='truncate text-muted-foreground text-xs'>
                 {image.album?.name ?? '未专辑'} ·{' '}
                 {formatFileSize(image.fileSize)}
               </p>
@@ -563,6 +626,50 @@ function ImageGrid({
         ))}
       </div>
     </div>
+  )
+}
+
+function ImagePreviewDialog({
+  image,
+  onOpenChange,
+}: {
+  image: ImageGridItem | null
+  onOpenChange: (open: boolean) => void
+}) {
+  return (
+    <Dialog onOpenChange={onOpenChange} open={Boolean(image)}>
+      <DialogContent
+        className='top-0 left-0 h-dvh w-dvw max-w-none translate-x-0 translate-y-0 rounded-none border-0 bg-black p-0 text-white shadow-none sm:max-w-none'
+        showCloseButton={false}
+      >
+        <DialogTitle className='sr-only'>
+          {image ? `查看原图：${image.title}` : '查看原图'}
+        </DialogTitle>
+        <DialogDescription className='sr-only'>
+          双击图片后打开的原图预览。
+        </DialogDescription>
+        {image ? (
+          <div className='grid h-full min-h-0 place-items-center overflow-hidden bg-black p-0'>
+            <Button
+              className='absolute top-4 right-4 z-10 size-9 rounded-full border border-white/15 bg-black/35 text-white/80 shadow-none backdrop-blur transition hover:bg-white/10 hover:text-white focus-visible:ring-white/35'
+              onClick={() => onOpenChange(false)}
+              size='icon'
+              title='关闭'
+              type='button'
+              variant='ghost'
+            >
+              <X className='size-5' />
+            </Button>
+            <img
+              alt={image.title}
+              className='max-h-dvh max-w-dvw object-contain'
+              onDoubleClick={() => onOpenChange(false)}
+              src={image.originalUrl}
+            />
+          </div>
+        ) : null}
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -575,31 +682,15 @@ function ImageDetailsPanel({
   tags,
 }: {
   albums: Array<{ id: string; name: string }>
-  image: null | {
-    albumId: null | string
-    contentType: string
-    createdAt: Date | number | string
-    exif: null | Record<string, unknown>
-    fileSize: number
-    height: null | number
-    id: string
-    models: Array<{ id: string; name: string }>
-    note: null | string
-    originalUrl: string
-    rating: number
-    sourceUrl: null | string
-    tags: Array<{ id: string; name: string }>
-    thumbnailUrl: string
-    title: string
-    uploadedAt: Date | number | string
-    width: null | number
-  }
+  image: ImageDetail | null
   loading: boolean
   models: Array<{ id: string; name: string }>
   selectedCount: number
   tags: Array<{ id: string; name: string }>
 }) {
   const queryClient = useQueryClient()
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [saveError, setSaveError] = useState('')
   const [albumId, setAlbumId] = useState('')
   const [modelIds, setModelIds] = useState<string[]>([])
   const [note, setNote] = useState('')
@@ -616,22 +707,69 @@ function ImageDetailsPanel({
     setSourceUrl(image?.sourceUrl ?? '')
     setTagIds(image?.tags.map((tag) => tag.id) ?? [])
     setTitle(image?.title ?? '')
+    setSaveError('')
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = null
+    }
   }, [image])
 
+  useEffect(
+    () => () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current)
+      }
+    },
+    [],
+  )
+
   const updateMutation = useMutation({
-    mutationFn: () =>
-      orpc.admin.images.update.call({
-        albumId: albumId || null,
-        id: image?.id ?? '',
-        modelIds,
-        note,
-        rating,
-        sourceUrl,
-        tagIds,
-        title,
-      }),
-    onSuccess: () => invalidateAdminQueries(queryClient),
+    mutationFn: (input: ImageSaveInput) => orpc.admin.images.update.call(input),
+    onError: (error) =>
+      setSaveError(error instanceof Error ? error.message : '保存失败'),
+    onSuccess: () => {
+      setSaveError('')
+      invalidateAdminQueries(queryClient)
+    },
   })
+
+  function buildSaveInput(patch: ImageSavePatch): ImageSaveInput | null {
+    if (!image) {
+      return null
+    }
+
+    if (patch.title !== undefined && patch.title.trim().length === 0) {
+      return null
+    }
+
+    return {
+      id: image.id,
+      ...patch,
+    }
+  }
+
+  function savePatch(patch: ImageSavePatch, delay = 0) {
+    const input = buildSaveInput(patch)
+
+    if (!input) {
+      return
+    }
+
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = null
+    }
+
+    if (delay > 0) {
+      saveTimerRef.current = setTimeout(() => {
+        updateMutation.mutate(input)
+        saveTimerRef.current = null
+      }, delay)
+      return
+    }
+
+    updateMutation.mutate(input)
+  }
 
   if (loading) {
     return (
@@ -666,10 +804,20 @@ function ImageDetailsPanel({
         />
       </div>
       <div className='space-y-4 px-4 pb-5'>
-        <FieldInput onChange={setTitle} placeholder='标题' value={title} />
+        <FieldInput
+          onChange={(value) => {
+            setTitle(value)
+            savePatch({ title: value }, 650)
+          }}
+          placeholder='标题'
+          value={title}
+        />
         <textarea
           className='min-h-20 w-full resize-none rounded-md border border-[#383a37] bg-[#17181b] px-3 py-2 text-sm outline-none placeholder:text-[#777a75] focus:border-[#73e0d3]'
-          onChange={(event) => setNote(event.target.value)}
+          onChange={(event) => {
+            setNote(event.target.value)
+            savePatch({ note: event.target.value }, 650)
+          }}
           placeholder='添加注释'
           value={note}
         />
@@ -677,7 +825,10 @@ function ImageDetailsPanel({
           <Link2 className='-translate-y-1/2 pointer-events-none absolute top-1/2 left-3 size-4 text-[#878a86]' />
           <input
             className='h-9 w-full rounded-md border border-[#383a37] bg-[#17181b] pr-3 pl-9 text-sm outline-none placeholder:text-[#777a75] focus:border-[#73e0d3]'
-            onChange={(event) => setSourceUrl(event.target.value)}
+            onChange={(event) => {
+              setSourceUrl(event.target.value)
+              savePatch({ sourceUrl: event.target.value }, 650)
+            }}
             placeholder='http://'
             type='url'
             value={sourceUrl}
@@ -687,23 +838,24 @@ function ImageDetailsPanel({
         <section className='border-[#333331] border-t pt-4'>
           <p className='mb-2 font-semibold text-[#bfc2bd] text-sm'>评分</p>
           <div className='flex gap-1'>
-            {Array.from({ length: 5 }, (_, index) => index + 1).map(
-              (value) => (
-                <button
-                  className='text-[#686b68] hover:text-[#e7c66a]'
-                  key={value}
-                  onClick={() => setRating(value)}
-                  type='button'
-                >
-                  <Star
-                    className={cn(
-                      'size-5',
-                      value <= rating && 'fill-[#e7c66a] text-[#e7c66a]',
-                    )}
-                  />
-                </button>
-              ),
-            )}
+            {Array.from({ length: 5 }, (_, index) => index + 1).map((value) => (
+              <button
+                className='text-[#686b68] hover:text-[#e7c66a]'
+                key={value}
+                onClick={() => {
+                  setRating(value)
+                  savePatch({ rating: value })
+                }}
+                type='button'
+              >
+                <Star
+                  className={cn(
+                    'size-5',
+                    value <= rating && 'fill-[#e7c66a] text-[#e7c66a]',
+                  )}
+                />
+              </button>
+            ))}
           </div>
         </section>
 
@@ -711,7 +863,10 @@ function ImageDetailsPanel({
           <p className='mb-2 font-semibold text-[#bfc2bd] text-sm'>专辑</p>
           <select
             className='h-9 w-full rounded-md border border-[#383a37] bg-[#17181b] px-3 text-sm outline-none focus:border-[#73e0d3]'
-            onChange={(event) => setAlbumId(event.target.value)}
+            onChange={(event) => {
+              setAlbumId(event.target.value)
+              savePatch({ albumId: event.target.value || null })
+            }}
             value={albumId}
           >
             <option value=''>未专辑</option>
@@ -723,13 +878,36 @@ function ImageDetailsPanel({
           </select>
         </section>
 
-        <CheckList ids={tagIds} items={tags} label='标签' setIds={setTagIds} />
+        <TagPicker
+          ids={tagIds}
+          items={tags}
+          label='标签'
+          onChange={(nextIds) => {
+            setTagIds(nextIds)
+            savePatch({ tagIds: nextIds })
+          }}
+          saving={updateMutation.isPending}
+        />
         <CheckList
           ids={modelIds}
           items={models}
           label='模特'
-          setIds={setModelIds}
+          setIds={(nextIds) => {
+            setModelIds(nextIds)
+            savePatch({ modelIds: nextIds })
+          }}
         />
+
+        {(updateMutation.isPending || saveError) && (
+          <p
+            className={cn(
+              'text-muted-foreground text-xs',
+              saveError && 'text-destructive',
+            )}
+          >
+            {saveError || '正在保存...'}
+          </p>
+        )}
 
         <section className='border-[#333331] border-t pt-4 text-sm'>
           <p className='mb-2 font-semibold text-[#bfc2bd]'>基本信息</p>
@@ -754,24 +932,11 @@ function ImageDetailsPanel({
 
         <a
           className='inline-flex h-10 w-full items-center justify-center rounded-md bg-[#2c302f] font-medium text-[#e7e3d8] no-underline hover:bg-[#383d3a]'
+          download={image.originalFilename}
           href={image.originalUrl}
-          rel='noreferrer'
-          target='_blank'
         >
           导出
         </a>
-        <button
-          className='inline-flex h-10 w-full items-center justify-center rounded-md bg-[#73e0d3] font-semibold text-[#151615] hover:bg-[#8bece0] disabled:opacity-60'
-          disabled={updateMutation.isPending || title.trim().length === 0}
-          onClick={() => updateMutation.mutate()}
-          type='button'
-        >
-          {updateMutation.isPending ? (
-            <Loader2 className='size-4 animate-spin' />
-          ) : (
-            '保存'
-          )}
-        </button>
       </div>
     </aside>
   )
@@ -797,6 +962,124 @@ function FieldInput({
   )
 }
 
+function TagPicker({
+  ids,
+  items,
+  label,
+  onChange,
+  saving,
+}: {
+  ids: string[]
+  items: NamedOption[]
+  label: string
+  onChange: (ids: string[]) => void
+  saving: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const selectedItems = items.filter((item) => ids.includes(item.id))
+  const normalizedQuery = query.trim().toLowerCase()
+  const filteredItems = normalizedQuery
+    ? items.filter((item) => item.name.toLowerCase().includes(normalizedQuery))
+    : items
+
+  function toggle(id: string) {
+    onChange(
+      ids.includes(id) ? ids.filter((itemId) => itemId !== id) : [...ids, id],
+    )
+  }
+
+  return (
+    <section className='border-[#333331] border-t pt-4'>
+      <div className='mb-2 flex items-center justify-between gap-2'>
+        <p className='font-semibold text-[#bfc2bd] text-sm'>{label}</p>
+        {saving ? (
+          <span className='text-muted-foreground text-xs'>保存中</span>
+        ) : null}
+      </div>
+
+      {selectedItems.length > 0 ? (
+        <div className='mb-2 flex flex-wrap gap-1.5'>
+          {selectedItems.map((item) => (
+            <button
+              className='inline-flex h-7 items-center gap-1 rounded-full border border-border bg-secondary px-2.5 text-secondary-foreground text-xs transition hover:bg-accent'
+              key={item.id}
+              onClick={() => toggle(item.id)}
+              type='button'
+            >
+              {item.name}
+              <X className='size-3' />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className='mb-2 text-[#858883] text-sm'>暂无</p>
+      )}
+
+      <Popover onOpenChange={setOpen} open={open}>
+        <PopoverTrigger asChild>
+          <Button className='w-full' type='button' variant='secondary'>
+            <Plus className='size-4' />
+            添加标签
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align='start' className='w-80 p-0'>
+          <div className='border-b p-3'>
+            <div className='relative'>
+              <Search className='-translate-y-1/2 pointer-events-none absolute top-1/2 left-3 size-4 text-muted-foreground' />
+              <Input
+                className='pl-9'
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder='搜索标签...'
+                value={query}
+              />
+            </div>
+          </div>
+
+          <div className='max-h-80 overflow-y-auto p-2'>
+            {filteredItems.length === 0 ? (
+              <p className='px-2 py-6 text-center text-muted-foreground text-sm'>
+                没有匹配标签
+              </p>
+            ) : (
+              filteredItems.map((item) => {
+                const checked = ids.includes(item.id)
+                return (
+                  <button
+                    className={cn(
+                      'flex h-9 w-full cursor-pointer items-center gap-2 rounded-md px-2 text-left text-sm transition hover:bg-accent',
+                      checked && 'bg-accent',
+                    )}
+                    key={item.id}
+                    onClick={() => toggle(item.id)}
+                    type='button'
+                  >
+                    <VisualCheck checked={checked} />
+                    <span className='min-w-0 flex-1 truncate'>{item.name}</span>
+                  </button>
+                )
+              })
+            )}
+          </div>
+
+          <Separator />
+          <div className='flex items-center justify-between px-3 py-2 text-muted-foreground text-xs'>
+            <span>已选 {ids.length}</span>
+            <Button
+              onClick={() => setOpen(false)}
+              size='xs'
+              type='button'
+              variant='ghost'
+            >
+              关闭
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </section>
+  )
+}
+
 function CheckList({
   ids,
   items,
@@ -804,7 +1087,7 @@ function CheckList({
   setIds,
 }: {
   ids: string[]
-  items: Array<{ id: string; name: string }>
+  items: NamedOption[]
   label: string
   setIds: (ids: string[]) => void
 }) {
@@ -818,28 +1101,39 @@ function CheckList({
           items.map((item) => {
             const checked = ids.includes(item.id)
             return (
-              <label
-                className='flex h-8 cursor-pointer items-center gap-2 rounded-md px-2 text-sm hover:bg-[#2a2b2e]'
+              <button
+                className='flex h-8 cursor-pointer items-center gap-2 rounded-md px-2 text-left text-sm hover:bg-[#2a2b2e]'
                 key={item.id}
+                onClick={() => {
+                  setIds(
+                    checked
+                      ? ids.filter((id) => id !== item.id)
+                      : [...ids, item.id],
+                  )
+                }}
+                type='button'
               >
-                <input
-                  checked={checked}
-                  onChange={() => {
-                    setIds(
-                      checked
-                        ? ids.filter((id) => id !== item.id)
-                        : [...ids, item.id],
-                    )
-                  }}
-                  type='checkbox'
-                />
+                <VisualCheck checked={checked} />
                 <span className='truncate'>{item.name}</span>
-              </label>
+              </button>
             )
           })
         )}
       </div>
     </section>
+  )
+}
+
+function VisualCheck({ checked }: { checked: boolean }) {
+  return (
+    <span
+      className={cn(
+        'grid size-4 shrink-0 place-items-center rounded-[4px] border border-input bg-background',
+        checked && 'border-primary bg-primary text-primary-foreground',
+      )}
+    >
+      {checked ? <Check className='size-3' /> : null}
+    </span>
   )
 }
 
