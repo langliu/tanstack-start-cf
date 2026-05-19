@@ -11,17 +11,17 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '#/components/ui/button'
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from '#/components/ui/drawer'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '#/components/ui/sheet'
 import {
   Table,
   TableBody,
@@ -362,8 +362,7 @@ function ModelsPage() {
         )}
       </div>
 
-      <Drawer
-        direction='right'
+      <Sheet
         onOpenChange={(open) => {
           if (open) {
             setDrawerOpen(true)
@@ -374,13 +373,16 @@ function ModelsPage() {
         }}
         open={drawerOpen}
       >
-        <DrawerContent className='admin-shell border-border bg-card text-card-foreground'>
-          <DrawerHeader>
-            <DrawerTitle>{drawerTitle}</DrawerTitle>
-            <DrawerDescription>
+        <SheetContent
+          className='admin-shell border-border bg-card text-card-foreground'
+          side='right'
+        >
+          <SheetHeader>
+            <SheetTitle>{drawerTitle}</SheetTitle>
+            <SheetDescription>
               上传独立头像并维护模特资料，头像不会进入首页图片库。
-            </DrawerDescription>
-          </DrawerHeader>
+            </SheetDescription>
+          </SheetHeader>
           <div className='flex max-h-[calc(100vh-12rem)] flex-col gap-4 overflow-y-auto px-4'>
             <div className='flex flex-col gap-2'>
               <Label>头像</Label>
@@ -476,7 +478,7 @@ function ModelsPage() {
               />
             </div>
           </div>
-          <DrawerFooter>
+          <SheetFooter>
             {(saveMutation.isError || uploadError) && (
               <p className='text-destructive text-xs'>
                 {uploadError ||
@@ -486,9 +488,9 @@ function ModelsPage() {
               </p>
             )}
             <div className='flex gap-3'>
-              <DrawerClose asChild>
+              <SheetClose asChild>
                 <Button variant='outline'>取消</Button>
-              </DrawerClose>
+              </SheetClose>
               <Button
                 disabled={
                   formName.trim().length === 0 || saveMutation.isPending
@@ -502,9 +504,9 @@ function ModelsPage() {
                 )}
               </Button>
             </div>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </section>
   )
 }

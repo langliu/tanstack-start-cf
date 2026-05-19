@@ -19,18 +19,12 @@ import {
   X,
 } from 'lucide-react'
 import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
-import {
   type RenderComponentProps,
   useMasonry,
   usePositioner,
   useResizeObserver,
 } from 'masonic'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Checkbox } from '#/components/ui/checkbox'
@@ -46,7 +40,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '#/components/ui/popover'
-import { Separator } from '#/components/ui/separator'
 import {
   Select,
   SelectContent,
@@ -55,6 +48,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '#/components/ui/select'
+import { Separator } from '#/components/ui/separator'
 import { cn } from '#/lib/utils'
 import { orpc } from '#/orpc/client'
 import { ActionButton, invalidateAdminQueries } from './route'
@@ -258,11 +252,16 @@ export function AdminImageLibrary({
           return {
             ...data,
             pages: data.pages.map((page) => {
-              const items = page.items.filter((image) => !deletedIds.has(image.id))
+              const items = page.items.filter(
+                (image) => !deletedIds.has(image.id),
+              )
               return {
                 ...page,
                 items,
-                total: Math.max(0, page.total - (page.items.length - items.length)),
+                total: Math.max(
+                  0,
+                  page.total - (page.items.length - items.length),
+                ),
               }
             }),
           }
@@ -510,9 +509,9 @@ export function AdminImageLibrary({
         )}
       >
         <ImageGrid
-          images={visibleImages}
           emptyMessage={isTrashFilter ? '回收站为空' : '暂无图片'}
           hasNextPage={imagesQuery.hasNextPage}
+          images={visibleImages}
           isFetchingNextPage={imagesQuery.isFetchingNextPage}
           loading={imagesQuery.isLoading}
           onFocus={setSelectedImageId}
@@ -745,21 +744,20 @@ function ImageGrid({
   )
   const resizeObserver = useResizeObserver(positioner)
   const renderCard = useCallback(
-    ({ data: image, width }: RenderComponentProps<ImageGridItem>) => (
+    ({ data: image, width }: RenderComponentProps<ImageGridItem>) =>
       image ? (
         <ImageMasonryCard
+          checked={selectedIds.has(image.id)}
           image={image}
           onFocus={onFocus}
           onPreview={onPreview}
           onToggle={onToggle}
           selected={selectedImageId === image.id}
-          checked={selectedIds.has(image.id)}
           width={width}
         />
       ) : (
         <div aria-hidden style={{ width }} />
-      )
-    ),
+      ),
     [onFocus, onPreview, onToggle, selectedIds, selectedImageId],
   )
   const handleRender = useCallback(
@@ -1458,9 +1456,7 @@ function ModelPicker({
                   >
                     <VisualCheck checked={checked} />
                     <ModelAvatar className='size-8' model={item} />
-                    <span className='min-w-0 flex-1 truncate'>
-                      {item.name}
-                    </span>
+                    <span className='min-w-0 flex-1 truncate'>{item.name}</span>
                   </button>
                 )
               })
@@ -1727,7 +1723,11 @@ function colorDistance(
   left: { blue: number; green: number; red: number },
   right: { blue: number; green: number; red: number },
 ) {
-  return Math.hypot(left.red - right.red, left.green - right.green, left.blue - right.blue)
+  return Math.hypot(
+    left.red - right.red,
+    left.green - right.green,
+    left.blue - right.blue,
+  )
 }
 
 function rgbToHex(color: { blue: number; green: number; red: number }) {

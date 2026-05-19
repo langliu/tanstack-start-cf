@@ -116,8 +116,8 @@ export async function listLibraryStats() {
     .where(isNotNull(images.deletedAt))
 
   return {
-    trash: trash?.value ?? 0,
     total: total?.value ?? 0,
+    trash: trash?.value ?? 0,
     unalbumed: unalbumed?.value ?? 0,
     untagged: untagged?.value ?? 0,
   }
@@ -143,7 +143,7 @@ export async function listAgencies(
     .from(agencies)
     .where(where)
 
-  return { items, total: totalResult?.value ?? 0, limit, offset }
+  return { items, limit, offset, total: totalResult?.value ?? 0 }
 }
 
 export async function createAgency(input: {
@@ -211,7 +211,12 @@ export async function deleteAgency(id: string) {
 }
 
 export async function listAlbums(
-  input: { agencyId?: string; limit?: number; offset?: number; q?: string } = {},
+  input: {
+    agencyId?: string
+    limit?: number
+    offset?: number
+    q?: string
+  } = {},
 ) {
   const limit = Math.min(input.limit ?? 50, 200)
   const offset = input.offset ?? 0
@@ -245,9 +250,9 @@ export async function listAlbums(
 
   return {
     items: items.map((album) => formatAlbum(album, coverMap)),
-    total: totalResult?.value ?? 0,
     limit,
     offset,
+    total: totalResult?.value ?? 0,
   }
 }
 
@@ -388,7 +393,7 @@ export async function listTags(
     .from(tags)
     .where(where)
 
-  return { items, total: totalResult?.value ?? 0, limit, offset }
+  return { items, limit, offset, total: totalResult?.value ?? 0 }
 }
 
 export async function createTag(input: {
@@ -471,7 +476,7 @@ export async function listModels(
     .from(models)
     .where(where)
 
-  return { items, total: totalResult?.value ?? 0, limit, offset }
+  return { items, limit, offset, total: totalResult?.value ?? 0 }
 }
 
 export async function createModel(input: {
@@ -760,10 +765,7 @@ export async function updateImage(input: {
       .update(albums)
       .set({ coverImageId: null, updatedAt: now() })
       .where(
-        and(
-          eq(albums.id, previousAlbumId),
-          eq(albums.coverImageId, input.id),
-        ),
+        and(eq(albums.id, previousAlbumId), eq(albums.coverImageId, input.id)),
       )
   }
 
@@ -784,7 +786,7 @@ export async function updateImage(input: {
         ),
       )
 
-    if (Boolean(album) && !album?.coverImageId && (existingImages?.value ?? 0) === 0) {
+    if (album && !album?.coverImageId && (existingImages?.value ?? 0) === 0) {
       await db
         .update(albums)
         .set({ coverImageId: input.id, updatedAt: now() })
@@ -859,7 +861,9 @@ export async function batchAssignAlbum(input: {
       .where(and(eq(images.albumId, input.albumId), isNull(images.deletedAt)))
 
     shouldSetInitialCover =
-      Boolean(album) && !album?.coverImageId && (existingImages?.value ?? 0) === 0
+      Boolean(album) &&
+      !album?.coverImageId &&
+      (existingImages?.value ?? 0) === 0
   }
 
   await db
@@ -954,7 +958,12 @@ export async function deleteImages(input: { imageIds: string[] }) {
     await db
       .update(albums)
       .set({ coverImageId: null, updatedAt: now() })
-      .where(inArray(albums.coverImageId, rows.map((row) => row.id)))
+      .where(
+        inArray(
+          albums.coverImageId,
+          rows.map((row) => row.id),
+        ),
+      )
   }
 
   if (softDeleteIds.length > 0) {
@@ -973,14 +982,12 @@ export async function deleteImages(input: { imageIds: string[] }) {
       ),
     )
 
-    await db
-      .delete(images)
-      .where(
-        inArray(
-          images.id,
-          hardDeleteRows.map((row) => row.id),
-        ),
-      )
+    await db.delete(images).where(
+      inArray(
+        images.id,
+        hardDeleteRows.map((row) => row.id),
+      ),
+    )
   }
 
   return {
@@ -1115,9 +1122,9 @@ async function fetchAlbumCoverMap(albumRows: Album[]) {
 
   const coverRows = await db
     .select({
+      albumId: images.albumId,
       height: images.height,
       id: images.id,
-      albumId: images.albumId,
       originalKey: images.originalKey,
       thumbnailKey: images.thumbnailKey,
       title: images.title,

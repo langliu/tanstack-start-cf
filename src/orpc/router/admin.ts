@@ -127,7 +127,10 @@ const ImageUpdateInputSchema = z.object({
 })
 
 const ImageChecksumInputSchema = z.object({
-  checksumSha256: z.string().trim().regex(/^[a-f0-9]{64}$/i),
+  checksumSha256: z
+    .string()
+    .trim()
+    .regex(/^[a-f0-9]{64}$/i),
 })
 
 function requireFound<T>(value: T | null | undefined) {
@@ -162,9 +165,7 @@ export const admin = {
       .handler(({ input }) => deleteAlbum(input.id)),
     detail: adminProcedure
       .input(z.object({ id: IdSchema }))
-      .handler(async ({ input }) =>
-        requireFound(await getAlbum(input.id)),
-      ),
+      .handler(async ({ input }) => requireFound(await getAlbum(input.id))),
     list: adminProcedure
       .input(AlbumListInputSchema)
       .handler(({ input }) => listAlbums(input)),
@@ -197,9 +198,7 @@ export const admin = {
       ),
     findByChecksum: adminProcedure
       .input(ImageChecksumInputSchema)
-      .handler(({ input }) =>
-        findImageByChecksumSha256(input.checksumSha256),
-      ),
+      .handler(({ input }) => findImageByChecksumSha256(input.checksumSha256)),
     list: adminProcedure
       .input(ImageListInputSchema)
       .handler(({ input }) => listImages(input)),

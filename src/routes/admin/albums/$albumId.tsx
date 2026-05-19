@@ -285,7 +285,11 @@ function AlbumMasonryCard({
           onSelect={() => onSetCover(image.id)}
         >
           <ImageIcon className='size-4' />
-          {isCover ? '已是专辑封面' : settingCover ? '正在设置...' : '设为专辑封面'}
+          {isCover
+            ? '已是专辑封面'
+            : settingCover
+              ? '正在设置...'
+              : '设为专辑封面'}
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

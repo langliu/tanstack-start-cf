@@ -3,17 +3,17 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Building2, Edit, Loader2, Plus, Search, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '#/components/ui/button'
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from '#/components/ui/drawer'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '#/components/ui/sheet'
 import {
   Table,
   TableBody,
@@ -240,8 +240,7 @@ function AgenciesPage() {
         )}
       </div>
 
-      <Drawer
-        direction='right'
+      <Sheet
         onOpenChange={(open) => {
           if (open) {
             setDrawerOpen(true)
@@ -252,13 +251,16 @@ function AgenciesPage() {
         }}
         open={drawerOpen}
       >
-        <DrawerContent className='admin-shell border-border bg-card text-card-foreground'>
-          <DrawerHeader>
-            <DrawerTitle>{drawerTitle}</DrawerTitle>
-            <DrawerDescription>
+        <SheetContent
+          className='admin-shell border-border bg-card text-card-foreground'
+          side='right'
+        >
+          <SheetHeader>
+            <SheetTitle>{drawerTitle}</SheetTitle>
+            <SheetDescription>
               维护机构名称和官网地址，用于专辑归属和筛选。
-            </DrawerDescription>
-          </DrawerHeader>
+            </SheetDescription>
+          </SheetHeader>
           <div className='flex flex-col gap-4 px-4'>
             <div className='flex flex-col gap-1.5'>
               <Label>名称 *</Label>
@@ -279,7 +281,7 @@ function AgenciesPage() {
               />
             </div>
           </div>
-          <DrawerFooter>
+          <SheetFooter>
             {saveMutation.isError && (
               <p className='text-destructive text-xs'>
                 {saveMutation.error instanceof Error
@@ -288,9 +290,9 @@ function AgenciesPage() {
               </p>
             )}
             <div className='flex gap-3'>
-              <DrawerClose asChild>
+              <SheetClose asChild>
                 <Button variant='outline'>取消</Button>
-              </DrawerClose>
+              </SheetClose>
               <Button
                 disabled={
                   formName.trim().length === 0 || saveMutation.isPending
@@ -304,9 +306,9 @@ function AgenciesPage() {
                 )}
               </Button>
             </div>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </section>
   )
 }
