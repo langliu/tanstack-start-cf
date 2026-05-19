@@ -16,6 +16,7 @@ import { Label } from '#/components/ui/label'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -41,6 +42,8 @@ import { orpc } from '#/orpc/client'
 import { invalidateAdminQueries } from '../route'
 
 const PAGE_SIZE = 20
+const ALL_AGENCIES_VALUE = '__all_agencies__'
+const NO_AGENCY_VALUE = '__no_agency__'
 
 type AlbumRow = {
   agency?: { id: string; name: string } | null
@@ -186,22 +189,28 @@ function AlbumsIndexPage() {
             value={q}
           />
         </div>
-        <select
-          className='h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50'
-          onChange={(e) => {
-            setAgencyFilter(e.target.value)
+        <Select
+          onValueChange={(value) => {
+            setAgencyFilter(value === ALL_AGENCIES_VALUE ? '' : value)
             setPage(0)
           }}
-          value={agencyFilter}
+          value={agencyFilter || ALL_AGENCIES_VALUE}
         >
-          <option value=''>全部机构</option>
-          {Array.isArray(agencies) &&
-            agencies.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name}
-              </option>
-            ))}
-        </select>
+          <SelectTrigger className='h-9 min-w-32 bg-background'>
+            <SelectValue placeholder='全部机构' />
+          </SelectTrigger>
+          <SelectContent className='admin-shell'>
+            <SelectGroup>
+              <SelectItem value={ALL_AGENCIES_VALUE}>全部机构</SelectItem>
+              {Array.isArray(agencies) &&
+                agencies.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.name}
+                  </SelectItem>
+                ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
         <Button onClick={openCreate}>
           <Plus className='size-4' />
           新增
@@ -329,7 +338,7 @@ function AlbumsIndexPage() {
         open={drawerOpen}
       >
         <SheetContent
-          className='w-[min(420px,calc(100vw-16px))] gap-0 border-border bg-card p-0 text-card-foreground shadow-2xl sm:max-w-[420px]'
+          className='admin-shell w-[min(420px,calc(100vw-16px))] gap-0 border-border bg-card p-0 text-card-foreground shadow-2xl sm:max-w-[420px]'
           showCloseButton={false}
           side='right'
         >
@@ -369,19 +378,24 @@ function AlbumsIndexPage() {
               <div className='space-y-2'>
                 <Label className='text-sm'>机构</Label>
                 <Select
-                  onValueChange={(v) => setFormAgencyId(v)}
-                  value={formAgencyId || undefined}
+                  onValueChange={(value) =>
+                    setFormAgencyId(value === NO_AGENCY_VALUE ? '' : value)
+                  }
+                  value={formAgencyId || NO_AGENCY_VALUE}
                 >
                   <SelectTrigger className='h-10 w-full bg-background/60'>
                     <SelectValue placeholder='无机构' />
                   </SelectTrigger>
-                  <SelectContent>
-                    {Array.isArray(agencies) &&
-                      agencies.map((a) => (
-                        <SelectItem key={a.id} value={a.id}>
-                          {a.name}
-                        </SelectItem>
-                      ))}
+                  <SelectContent className='admin-shell'>
+                    <SelectGroup>
+                      <SelectItem value={NO_AGENCY_VALUE}>无机构</SelectItem>
+                      {Array.isArray(agencies) &&
+                        agencies.map((a) => (
+                          <SelectItem key={a.id} value={a.id}>
+                            {a.name}
+                          </SelectItem>
+                        ))}
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
               </div>

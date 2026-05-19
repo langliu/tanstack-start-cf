@@ -1,9 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import {
   Check,
   CheckSquare,
-  ImageIcon,
   ImageOff,
   Link2,
   Loader2,
@@ -12,9 +16,22 @@ import {
   Star,
   Trash2,
   Upload,
+  UserRound,
   X,
 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
+import {
+  type RenderComponentProps,
+  useMasonry,
+  usePositioner,
+  useResizeObserver,
+} from 'masonic'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Checkbox } from '#/components/ui/checkbox'
@@ -31,6 +48,14 @@ import {
   PopoverTrigger,
 } from '#/components/ui/popover'
 import { Separator } from '#/components/ui/separator'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/components/ui/select'
 import { cn } from '#/lib/utils'
 import { orpc } from '#/orpc/client'
 import { ActionButton, invalidateAdminQueries } from './route'
@@ -69,6 +94,7 @@ type ImageGridItem = {
 }
 
 type NamedOption = {
+  avatarObjectKey?: null | string
   id: string
   name: string
 }
@@ -77,7 +103,6 @@ type ImageDetail = {
   albumId: null | string
   contentType: string
   createdAt: Date | number | string
-  exif: null | Record<string, unknown>
   fileSize: number
   height: null | number
   id: string
@@ -113,6 +138,23 @@ const FILTER_TABS: { key: LibraryFilter; label: string }[] = [
   { key: 'unalbumed', label: '未专辑' },
 ]
 
+const IMAGE_PAGE_SIZE = 120
+const MASONRY_COLUMN_WIDTH = 128
+const MASONRY_GUTTER = 12
+const MASONRY_LOAD_AHEAD = 20
+const MASONRY_MAX_COLUMNS = 9
+const MASONRY_OVERSCAN_BY = 2
+const NO_TAG_VALUE = '__no_tag__'
+const NO_ALBUM_VALUE = '__no_album__'
+const NO_MODEL_VALUE = '__no_model__'
+
+type ImageListPage = {
+  items: ImageGridItem[]
+  limit: number
+  offset: number
+  total: number
+}
+
 function LibraryPage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
@@ -124,6 +166,7 @@ function LibraryPage() {
   const [previewImage, setPreviewImage] = useState<ImageGridItem | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null)
+  const [imageGridVersion, setImageGridVersion] = useState(0)
   const [uploadError, setUploadError] = useState('')
   const [uploading, setUploading] = useState(false)
 
@@ -143,20 +186,23 @@ function LibraryPage() {
     }),
   )
 
-  const imagesInput = useMemo(
-    () => ({
-      filter: activeFilter,
-      limit: 80,
-      q: query || undefined,
-    }),
-    [activeFilter, query],
-  )
+  const imageSearchQuery = query.trim()
 
-  const imagesQuery = useQuery(
-    orpc.admin.images.list.queryOptions({
-      input: imagesInput,
-    }),
-  )
+  const imagesQuery = useInfiniteQuery({
+    getNextPageParam: (lastPage) => {
+      const nextOffset = lastPage.offset + lastPage.items.length
+      return nextOffset < lastPage.total ? nextOffset : undefined
+    },
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) =>
+      (await orpc.admin.images.list.call({
+        filter: activeFilter,
+        limit: IMAGE_PAGE_SIZE,
+        offset: pageParam,
+        q: imageSearchQuery || undefined,
+      })) as ImageListPage,
+    queryKey: ['admin', 'images', 'library', activeFilter, imageSearchQuery],
+  })
 
   const selectedImageQuery = useQuery({
     ...orpc.admin.images.detail.queryOptions({
@@ -170,6 +216,7 @@ function LibraryPage() {
       orpc.admin.images.batchAddTags.call(input),
     onSuccess: () => {
       setBulkTagId('')
+      setImageGridVersion((version) => version + 1)
       invalidateAdminQueries(queryClient)
     },
   })
@@ -188,6 +235,7 @@ function LibraryPage() {
       orpc.admin.images.batchAssignAlbum.call(input),
     onSuccess: () => {
       setBulkAlbumId('')
+      setImageGridVersion((version) => version + 1)
       invalidateAdminQueries(queryClient)
     },
   })
@@ -198,6 +246,7 @@ function LibraryPage() {
     onSuccess: () => {
       setSelectedIds(new Set())
       setSelectedImageId(null)
+      setImageGridVersion((version) => version + 1)
       invalidateAdminQueries(queryClient)
     },
   })
@@ -208,9 +257,12 @@ function LibraryPage() {
     (tagsQuery.data as { items?: NamedOption[] } | undefined)?.items ?? []
   const models =
     (modelsQuery.data as { items?: NamedOption[] } | undefined)?.items ?? []
-  const imagesData = imagesQuery.data
-  const visibleImages = imagesData?.items ?? []
+  const visibleImages = useMemo(
+    () => imagesQuery.data?.pages.flatMap((page) => page.items) ?? [],
+    [imagesQuery.data],
+  )
   const selectedImage = selectedImageQuery.data ?? null
+  const isDetailsOpen = Boolean(selectedImageId)
   const selectedIdList = Array.from(selectedIds)
 
   async function uploadFiles(files: FileList | null) {
@@ -251,6 +303,7 @@ function LibraryPage() {
         }
       }
       await invalidateAdminQueries(queryClient)
+      setImageGridVersion((version) => version + 1)
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : '上传失败')
     } finally {
@@ -385,24 +438,35 @@ function LibraryPage() {
         </div>
       ) : null}
 
-      <div className='grid min-h-0 flex-1 grid-cols-[1fr_360px] overflow-hidden max-lg:grid-cols-[1fr]'>
+      <div
+        className={cn(
+          'grid min-h-0 flex-1 overflow-hidden max-lg:grid-cols-[1fr]',
+          isDetailsOpen ? 'grid-cols-[1fr_360px]' : 'grid-cols-[1fr]',
+        )}
+      >
         <ImageGrid
           images={visibleImages}
+          hasNextPage={imagesQuery.hasNextPage}
+          isFetchingNextPage={imagesQuery.isFetchingNextPage}
           loading={imagesQuery.isLoading}
           onFocus={setSelectedImageId}
+          onLoadMore={() => void imagesQuery.fetchNextPage()}
           onPreview={setPreviewImage}
           onToggle={toggleImage}
+          resetKey={`${activeFilter}:${imageSearchQuery}:${imageGridVersion}`}
           selectedIds={selectedIds}
           selectedImageId={selectedImageId}
         />
-        <ImageDetailsPanel
-          albums={albums}
-          image={selectedImage}
-          loading={selectedImageQuery.isLoading}
-          models={models}
-          selectedCount={selectedIdList.length}
-          tags={tags}
-        />
+        {isDetailsOpen ? (
+          <ImageDetailsPanel
+            albums={albums}
+            image={selectedImage}
+            loading={selectedImageQuery.isLoading}
+            models={models}
+            onClose={() => setSelectedImageId(null)}
+            tags={tags}
+          />
+        ) : null}
       </div>
       <ImagePreviewDialog
         image={previewImage}
@@ -463,50 +527,74 @@ function BulkToolbar({
         已选 {selectedCount}
       </Badge>
 
-      <select
-        className='h-8 min-w-32 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50'
-        onChange={(event) => setTagId(event.target.value)}
-        value={tagId}
+      <Select
+        onValueChange={(value) =>
+          setTagId(value === NO_TAG_VALUE ? '' : value)
+        }
+        value={tagId || NO_TAG_VALUE}
       >
-        <option value=''>标签</option>
-        {tags.map((tag) => (
-          <option key={tag.id} value={tag.id}>
-            {tag.name}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger className='h-8 min-w-32 bg-background'>
+          <SelectValue placeholder='标签' />
+        </SelectTrigger>
+        <SelectContent className='admin-shell'>
+          <SelectGroup>
+            <SelectItem value={NO_TAG_VALUE}>标签</SelectItem>
+            {tags.map((tag) => (
+              <SelectItem key={tag.id} value={tag.id}>
+                {tag.name}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
       <ActionButton disabled={disabled || !tagId} onClick={onAddTag}>
         添加
       </ActionButton>
 
-      <select
-        className='h-8 min-w-32 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50'
-        onChange={(event) => setAlbumId(event.target.value)}
-        value={albumId}
+      <Select
+        onValueChange={(value) =>
+          setAlbumId(value === NO_ALBUM_VALUE ? '' : value)
+        }
+        value={albumId || NO_ALBUM_VALUE}
       >
-        <option value=''>未专辑</option>
-        {albums.map((album) => (
-          <option key={album.id} value={album.id}>
-            {album.name}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger className='h-8 min-w-32 bg-background'>
+          <SelectValue placeholder='未专辑' />
+        </SelectTrigger>
+        <SelectContent className='admin-shell'>
+          <SelectGroup>
+            <SelectItem value={NO_ALBUM_VALUE}>未专辑</SelectItem>
+            {albums.map((album) => (
+              <SelectItem key={album.id} value={album.id}>
+                {album.name}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
       <ActionButton disabled={disabled} onClick={onAssignAlbum}>
         移动
       </ActionButton>
 
-      <select
-        className='h-8 min-w-32 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50'
-        onChange={(event) => setModelId(event.target.value)}
-        value={modelId}
+      <Select
+        onValueChange={(value) =>
+          setModelId(value === NO_MODEL_VALUE ? '' : value)
+        }
+        value={modelId || NO_MODEL_VALUE}
       >
-        <option value=''>模特</option>
-        {models.map((model) => (
-          <option key={model.id} value={model.id}>
-            {model.name}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger className='h-8 min-w-32 bg-background'>
+          <SelectValue placeholder='模特' />
+        </SelectTrigger>
+        <SelectContent className='admin-shell'>
+          <SelectGroup>
+            <SelectItem value={NO_MODEL_VALUE}>模特</SelectItem>
+            {models.map((model) => (
+              <SelectItem key={model.id} value={model.id}>
+                {model.name}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
       <ActionButton disabled={disabled || !modelId} onClick={onAddModel}>
         关联
       </ActionButton>
@@ -537,22 +625,95 @@ function BulkToolbar({
 }
 
 function ImageGrid({
+  hasNextPage,
   images,
+  isFetchingNextPage,
   loading,
   onFocus,
+  onLoadMore,
   onPreview,
   onToggle,
+  resetKey,
   selectedIds,
   selectedImageId,
 }: {
+  hasNextPage: boolean
   images: ImageGridItem[]
+  isFetchingNextPage: boolean
   loading: boolean
   onFocus: (id: string) => void
+  onLoadMore: () => void
   onPreview: (image: ImageGridItem) => void
   onToggle: (id: string) => void
+  resetKey: string
   selectedIds: Set<string>
   selectedImageId: null | string
 }) {
+  const [containerElement, setContainerElement] =
+    useState<HTMLDivElement | null>(null)
+  const masonryRef = useRef<HTMLElement | null>(null)
+  const handleContainerRef = useCallback(
+    (element: HTMLDivElement | null) => setContainerElement(element),
+    [],
+  )
+  const containerSize = useElementSize(containerElement)
+  const { handleScroll, isScrolling, scrollTop } =
+    useElementScrollState(containerElement)
+  const positioner = usePositioner(
+    {
+      columnGutter: MASONRY_GUTTER,
+      columnWidth: MASONRY_COLUMN_WIDTH,
+      maxColumnCount: MASONRY_MAX_COLUMNS,
+      rowGutter: MASONRY_GUTTER,
+      width: Math.max(1, containerSize.width - 32),
+    },
+    [resetKey],
+  )
+  const resizeObserver = useResizeObserver(positioner)
+  const renderCard = useCallback(
+    ({ data: image, width }: RenderComponentProps<ImageGridItem>) => (
+      <ImageMasonryCard
+        image={image}
+        onFocus={onFocus}
+        onPreview={onPreview}
+        onToggle={onToggle}
+        selected={selectedImageId === image.id}
+        checked={selectedIds.has(image.id)}
+        width={width}
+      />
+    ),
+    [onFocus, onPreview, onToggle, selectedIds, selectedImageId],
+  )
+  const handleRender = useCallback(
+    (_startIndex: number, stopIndex: number) => {
+      if (
+        hasNextPage &&
+        !isFetchingNextPage &&
+        stopIndex >= images.length - MASONRY_LOAD_AHEAD
+      ) {
+        onLoadMore()
+      }
+    },
+    [hasNextPage, images.length, isFetchingNextPage, onLoadMore],
+  )
+  const masonry = useMasonry({
+    className: 'relative w-full outline-none',
+    containerRef: masonryRef,
+    height: Math.max(1, containerSize.height),
+    isScrolling,
+    itemHeightEstimate: 220,
+    itemKey: (image) => image.id,
+    items: images,
+    onRender: handleRender,
+    overscanBy: MASONRY_OVERSCAN_BY,
+    positioner,
+    render: renderCard,
+    resizeObserver,
+    role: 'list',
+    scrollTop,
+    tabIndex: -1,
+  })
+
   if (loading) {
     return (
       <div className='grid flex-1 place-items-center'>
@@ -573,59 +734,89 @@ function ImageGrid({
   }
 
   return (
-    <div className='min-h-0 overflow-y-auto p-4'>
-      <div className='w-full columns-2 gap-3 md:columns-3 lg:columns-5 xl:columns-6 2xl:columns-7 min-[1800px]:columns-8 min-[2200px]:columns-9'>
-        {images.map((image) => (
-          <article
-            className={cn(
-              'group mb-3 break-inside-avoid rounded-md border bg-card p-1 transition hover:border-ring',
-              selectedImageId === image.id && 'border-primary',
-            )}
-            key={image.id}
-          >
-            <div className='relative'>
-              <button
-                className='block w-full overflow-hidden rounded bg-background'
-                onClick={() => onFocus(image.id)}
-                onDoubleClick={() => onPreview(image)}
-                type='button'
-              >
-                <img
-                  alt={image.title}
-                  className='h-auto w-full object-cover'
-                  loading='lazy'
-                  src={image.thumbnailUrl}
-                />
-                <Badge
-                  className='absolute top-2 left-2 uppercase'
-                  variant='secondary'
-                >
-                  {fileExtension(image.originalFilename)}
-                </Badge>
-              </button>
-              <Checkbox
-                checked={selectedIds.has(image.id)}
-                className='absolute top-2 right-2 bg-background/80 opacity-0 shadow transition group-hover:opacity-100 data-[state=checked]:opacity-100'
-                onClick={() => onToggle(image.id)}
-                title='选择图片'
-              />
-            </div>
-            <button
-              className='block w-full px-1.5 pt-2 pb-1 text-left'
-              onClick={() => onFocus(image.id)}
-              onDoubleClick={() => onPreview(image)}
-              type='button'
-            >
-              <p className='truncate font-medium text-sm'>{image.title}</p>
-              <p className='truncate text-muted-foreground text-xs'>
-                {image.album?.name ?? '未专辑'} ·{' '}
-                {formatFileSize(image.fileSize)}
-              </p>
-            </button>
-          </article>
-        ))}
+    <div
+      className='min-h-0 overflow-y-auto p-4'
+      onScroll={handleScroll}
+      ref={handleContainerRef}
+    >
+      {masonry}
+      <div className='grid min-h-12 place-items-center pt-3 text-muted-foreground text-sm'>
+        {isFetchingNextPage ? (
+          <span className='inline-flex items-center gap-2'>
+            <Loader2 className='size-4 animate-spin' />
+            加载更多
+          </span>
+        ) : hasNextPage ? (
+          <span>继续向下滚动加载</span>
+        ) : (
+          <span>已加载全部</span>
+        )}
       </div>
     </div>
+  )
+}
+
+function ImageMasonryCard({
+  checked,
+  image,
+  onFocus,
+  onPreview,
+  onToggle,
+  selected,
+  width,
+}: {
+  checked: boolean
+  image: ImageGridItem
+  onFocus: (id: string) => void
+  onPreview: (image: ImageGridItem) => void
+  onToggle: (id: string) => void
+  selected: boolean
+  width: number
+}) {
+  return (
+    <article
+      className={cn(
+        'group rounded-md border bg-card p-1 transition hover:border-ring',
+        selected && 'border-primary',
+      )}
+      style={{ width }}
+    >
+      <div className='relative'>
+        <button
+          className='block w-full overflow-hidden rounded bg-background'
+          onClick={() => onFocus(image.id)}
+          onDoubleClick={() => onPreview(image)}
+          type='button'
+        >
+          <img
+            alt={image.title}
+            className='h-auto w-full object-cover'
+            loading='lazy'
+            src={image.thumbnailUrl}
+          />
+          <Badge className='absolute top-2 left-2 uppercase' variant='secondary'>
+            {fileExtension(image.originalFilename)}
+          </Badge>
+        </button>
+        <Checkbox
+          checked={checked}
+          className='absolute top-2 right-2 bg-background/80 opacity-0 shadow transition group-hover:opacity-100 data-[state=checked]:opacity-100'
+          onClick={() => onToggle(image.id)}
+          title='选择图片'
+        />
+      </div>
+      <button
+        className='block w-full px-1.5 pt-2 pb-1 text-left'
+        onClick={() => onFocus(image.id)}
+        onDoubleClick={() => onPreview(image)}
+        type='button'
+      >
+        <p className='truncate font-medium text-sm'>{image.title}</p>
+        <p className='truncate text-muted-foreground text-xs'>
+          {image.album?.name ?? '未专辑'} · {formatFileSize(image.fileSize)}
+        </p>
+      </button>
+    </article>
   )
 }
 
@@ -678,14 +869,14 @@ function ImageDetailsPanel({
   image,
   loading,
   models,
-  selectedCount,
+  onClose,
   tags,
 }: {
   albums: Array<{ id: string; name: string }>
   image: ImageDetail | null
   loading: boolean
   models: Array<{ id: string; name: string }>
-  selectedCount: number
+  onClose: () => void
   tags: Array<{ id: string; name: string }>
 }) {
   const queryClient = useQueryClient()
@@ -773,30 +964,41 @@ function ImageDetailsPanel({
 
   if (loading) {
     return (
-      <aside className='grid min-h-0 place-items-center border-[#333331] border-l bg-[#202125] max-lg:hidden'>
+      <aside className='relative grid min-h-0 place-items-center border-[#333331] border-l bg-[#202125] max-lg:hidden'>
+        <Button
+          className='absolute top-3 right-3 text-[#bfc2bd] hover:bg-[#2a2b2e] hover:text-[#f4f0e7]'
+          onClick={onClose}
+          size='icon-sm'
+          title='关闭详情'
+          type='button'
+          variant='ghost'
+        >
+          <X className='size-4' />
+        </Button>
         <Loader2 className='size-6 animate-spin text-[#73e0d3]' />
       </aside>
     )
   }
 
   if (!image) {
-    return (
-      <aside className='min-h-0 overflow-y-auto border-[#333331] border-l bg-[#202125] p-4 max-lg:hidden'>
-        <div className='grid h-full place-items-center text-center text-[#9da19b]'>
-          <div>
-            <ImageIcon className='mx-auto mb-3 size-9' />
-            <p>
-              {selectedCount > 0 ? `已选择 ${selectedCount} 张` : '选择图片'}
-            </p>
-          </div>
-        </div>
-      </aside>
-    )
+    return null
   }
 
   return (
     <aside className='min-h-0 overflow-y-auto border-[#333331] border-l bg-[#202125] max-lg:hidden'>
-      <div className='p-4'>
+      <div className='flex items-center justify-end px-3 pt-3'>
+        <Button
+          className='text-[#bfc2bd] hover:bg-[#2a2b2e] hover:text-[#f4f0e7]'
+          onClick={onClose}
+          size='icon-sm'
+          title='关闭详情'
+          type='button'
+          variant='ghost'
+        >
+          <X className='size-4' />
+        </Button>
+      </div>
+      <div className='px-4 pt-1 pb-4'>
         <img
           alt={image.title}
           className='mx-auto max-h-64 rounded-md object-contain'
@@ -861,21 +1063,28 @@ function ImageDetailsPanel({
 
         <section className='border-[#333331] border-t pt-4'>
           <p className='mb-2 font-semibold text-[#bfc2bd] text-sm'>专辑</p>
-          <select
-            className='h-9 w-full rounded-md border border-[#383a37] bg-[#17181b] px-3 text-sm outline-none focus:border-[#73e0d3]'
-            onChange={(event) => {
-              setAlbumId(event.target.value)
-              savePatch({ albumId: event.target.value || null })
+          <Select
+            onValueChange={(value) => {
+              const nextAlbumId = value === NO_ALBUM_VALUE ? '' : value
+              setAlbumId(nextAlbumId)
+              savePatch({ albumId: nextAlbumId || null })
             }}
-            value={albumId}
+            value={albumId || NO_ALBUM_VALUE}
           >
-            <option value=''>未专辑</option>
-            {albums.map((album) => (
-              <option key={album.id} value={album.id}>
-                {album.name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className='h-9 w-full border-[#383a37] bg-[#17181b] text-[#e7e3d8] shadow-none focus-visible:border-[#73e0d3] focus-visible:ring-[#73e0d3]/40'>
+              <SelectValue placeholder='未专辑' />
+            </SelectTrigger>
+            <SelectContent className='border-[#383a37] bg-[#17181b] text-[#e7e3d8]'>
+              <SelectGroup>
+                <SelectItem value={NO_ALBUM_VALUE}>未专辑</SelectItem>
+                {albums.map((album) => (
+                  <SelectItem key={album.id} value={album.id}>
+                    {album.name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </section>
 
         <TagPicker
@@ -888,14 +1097,15 @@ function ImageDetailsPanel({
           }}
           saving={updateMutation.isPending}
         />
-        <CheckList
+        <ModelPicker
           ids={modelIds}
           items={models}
           label='模特'
-          setIds={(nextIds) => {
+          onChange={(nextIds) => {
             setModelIds(nextIds)
             savePatch({ modelIds: nextIds })
           }}
+          saving={updateMutation.isPending}
         />
 
         {(updateMutation.isPending || saveError) && (
@@ -921,15 +1131,6 @@ function ImageDetailsPanel({
           <InfoRow label='创建' value={formatDate(image.createdAt)} />
         </section>
 
-        <section className='border-[#333331] border-t pt-4'>
-          <p className='mb-2 font-semibold text-[#bfc2bd] text-sm'>
-            Exif 元数据
-          </p>
-          <div className='rounded-md bg-[#2a2b2e] px-3 py-3 text-center text-[#8f938e] text-sm'>
-            {image.exif ? '已保存元数据' : '该文件没有相关信息'}
-          </div>
-        </section>
-
         <a
           className='inline-flex h-10 w-full items-center justify-center rounded-md bg-[#2c302f] font-medium text-[#e7e3d8] no-underline hover:bg-[#383d3a]'
           download={image.originalFilename}
@@ -953,7 +1154,7 @@ function FieldInput({
 }) {
   return (
     <input
-      className='h-9 min-w-0 rounded-md border border-[#383a37] bg-[#17181b] px-3 text-sm outline-none placeholder:text-[#777a75] focus:border-[#73e0d3]'
+      className='h-9 min-w-0 w-full rounded-md border border-[#383a37] bg-[#17181b] px-3 text-sm outline-none placeholder:text-[#777a75] focus:border-[#73e0d3]'
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
       type='text'
@@ -1080,47 +1281,152 @@ function TagPicker({
   )
 }
 
-function CheckList({
+function ModelPicker({
   ids,
   items,
   label,
-  setIds,
+  onChange,
+  saving,
 }: {
   ids: string[]
   items: NamedOption[]
   label: string
-  setIds: (ids: string[]) => void
+  onChange: (ids: string[]) => void
+  saving: boolean
 }) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const selectedItems = items.filter((item) => ids.includes(item.id))
+  const normalizedQuery = query.trim().toLowerCase()
+  const filteredItems = normalizedQuery
+    ? items.filter((item) => item.name.toLowerCase().includes(normalizedQuery))
+    : items
+
+  function toggle(id: string) {
+    onChange(
+      ids.includes(id) ? ids.filter((itemId) => itemId !== id) : [...ids, id],
+    )
+  }
+
   return (
     <section className='border-[#333331] border-t pt-4'>
-      <p className='mb-2 font-semibold text-[#bfc2bd] text-sm'>{label}</p>
-      <div className='grid max-h-32 gap-1 overflow-y-auto'>
-        {items.length === 0 ? (
-          <p className='text-[#858883] text-sm'>暂无</p>
-        ) : (
-          items.map((item) => {
-            const checked = ids.includes(item.id)
-            return (
-              <button
-                className='flex h-8 cursor-pointer items-center gap-2 rounded-md px-2 text-left text-sm hover:bg-[#2a2b2e]'
-                key={item.id}
-                onClick={() => {
-                  setIds(
-                    checked
-                      ? ids.filter((id) => id !== item.id)
-                      : [...ids, item.id],
-                  )
-                }}
-                type='button'
-              >
-                <VisualCheck checked={checked} />
-                <span className='truncate'>{item.name}</span>
-              </button>
-            )
-          })
-        )}
+      <div className='mb-2 flex items-center justify-between gap-2'>
+        <p className='font-semibold text-[#bfc2bd] text-sm'>{label}</p>
+        {saving ? (
+          <span className='text-muted-foreground text-xs'>保存中</span>
+        ) : null}
       </div>
+
+      {selectedItems.length > 0 ? (
+        <div className='mb-2 flex flex-wrap gap-1.5'>
+          {selectedItems.map((item) => (
+            <button
+              className='inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border border-border bg-secondary py-0 pr-2.5 pl-1 text-secondary-foreground text-xs transition hover:bg-accent'
+              key={item.id}
+              onClick={() => toggle(item.id)}
+              type='button'
+            >
+              <ModelAvatar className='size-6' model={item} />
+              <span className='truncate'>{item.name}</span>
+              <X className='size-3 shrink-0' />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className='mb-2 text-[#858883] text-sm'>暂无</p>
+      )}
+
+      <Popover onOpenChange={setOpen} open={open}>
+        <PopoverTrigger asChild>
+          <Button className='w-full' type='button' variant='secondary'>
+            <Plus className='size-4' />
+            添加模特
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align='start' className='w-80 p-0'>
+          <div className='border-b p-3'>
+            <div className='relative'>
+              <Search className='-translate-y-1/2 pointer-events-none absolute top-1/2 left-3 size-4 text-muted-foreground' />
+              <Input
+                className='pl-9'
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder='搜索模特...'
+                value={query}
+              />
+            </div>
+          </div>
+
+          <div className='max-h-80 overflow-y-auto p-2'>
+            {filteredItems.length === 0 ? (
+              <p className='px-2 py-6 text-center text-muted-foreground text-sm'>
+                没有匹配模特
+              </p>
+            ) : (
+              filteredItems.map((item) => {
+                const checked = ids.includes(item.id)
+                return (
+                  <button
+                    className={cn(
+                      'flex h-11 w-full cursor-pointer items-center gap-2 rounded-md px-2 text-left text-sm transition hover:bg-accent',
+                      checked && 'bg-accent',
+                    )}
+                    key={item.id}
+                    onClick={() => toggle(item.id)}
+                    type='button'
+                  >
+                    <VisualCheck checked={checked} />
+                    <ModelAvatar className='size-8' model={item} />
+                    <span className='min-w-0 flex-1 truncate'>
+                      {item.name}
+                    </span>
+                  </button>
+                )
+              })
+            )}
+          </div>
+
+          <Separator />
+          <div className='flex items-center justify-between px-3 py-2 text-muted-foreground text-xs'>
+            <span>已选 {ids.length}</span>
+            <Button
+              onClick={() => setOpen(false)}
+              size='xs'
+              type='button'
+              variant='ghost'
+            >
+              关闭
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
     </section>
+  )
+}
+
+function ModelAvatar({
+  className,
+  model,
+}: {
+  className?: string
+  model: NamedOption
+}) {
+  return (
+    <span
+      className={cn(
+        'grid shrink-0 place-items-center overflow-hidden rounded-full border border-border bg-background',
+        className,
+      )}
+    >
+      {model.avatarObjectKey ? (
+        <img
+          alt={model.name}
+          className='size-full object-cover'
+          src={publicAssetUrl(model.avatarObjectKey)}
+        />
+      ) : (
+        <UserRound className='size-4 text-muted-foreground' />
+      )}
+    </span>
   )
 }
 
@@ -1144,6 +1450,78 @@ function InfoRow({ label, value }: { label: string; value: string }) {
       <span className='truncate text-[#e6e2d7]'>{value}</span>
     </div>
   )
+}
+
+function useElementSize(element: HTMLElement | null) {
+  const [size, setSize] = useState({ height: 0, width: 0 })
+
+  useEffect(() => {
+    if (!element) {
+      return
+    }
+
+    function updateSize() {
+      setSize({
+        height: element.clientHeight,
+        width: element.clientWidth,
+      })
+    }
+
+    updateSize()
+
+    if (typeof ResizeObserver === 'undefined') {
+      return
+    }
+
+    const observer = new ResizeObserver(updateSize)
+    observer.observe(element)
+
+    return () => observer.disconnect()
+  }, [element])
+
+  return size
+}
+
+function useElementScrollState(element: HTMLElement | null) {
+  const frameRef = useRef<number | null>(null)
+  const scrollEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [scrollTop, setScrollTop] = useState(0)
+  const [isScrolling, setIsScrolling] = useState(false)
+
+  const handleScroll = useCallback(() => {
+    if (!element || frameRef.current !== null) {
+      return
+    }
+
+    frameRef.current = requestAnimationFrame(() => {
+      frameRef.current = null
+      setScrollTop(element?.scrollTop ?? 0)
+      setIsScrolling(true)
+
+      if (scrollEndTimerRef.current) {
+        clearTimeout(scrollEndTimerRef.current)
+      }
+
+      scrollEndTimerRef.current = setTimeout(() => {
+        setIsScrolling(false)
+        scrollEndTimerRef.current = null
+      }, 120)
+    })
+  }, [element])
+
+  useEffect(
+    () => () => {
+      if (frameRef.current !== null) {
+        cancelAnimationFrame(frameRef.current)
+      }
+      if (scrollEndTimerRef.current) {
+        clearTimeout(scrollEndTimerRef.current)
+      }
+    },
+    [],
+  )
+
+  return { handleScroll, isScrolling, scrollTop }
 }
 
 async function prepareUpload(file: File): Promise<UploadResult> {
@@ -1215,4 +1593,8 @@ function formatDate(value: Date | number | string) {
     month: '2-digit',
     year: 'numeric',
   }).format(date)
+}
+
+function publicAssetUrl(objectKey: string) {
+  return `/api/assets/${objectKey.split('/').map(encodeURIComponent).join('/')}`
 }

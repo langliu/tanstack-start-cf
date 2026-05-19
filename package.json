@@ -28,7 +28,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@cloudflare/vite-plugin": "^1.37.0",
+    "@cloudflare/vite-plugin": "^1.37.1",
     "@faker-js/faker": "^10.4.0",
     "@orpc/client": "^1.14.3",
     "@orpc/json-schema": "^1.14.3",
@@ -47,7 +47,7 @@
     "@tanstack/react-router-ssr-query": "latest",
     "@tanstack/react-start": "latest",
     "@tanstack/react-table": "latest",
-    "@tanstack/router-plugin": "^1.167.35",
+    "@tanstack/router-plugin": "^1.168.6",
     "better-auth": "^1.6.11",
     "better-sqlite3": "^12.10.0",
     "class-variance-authority": "^0.7.1",
@@ -55,6 +55,7 @@
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
     "lucide-react": "^1.16.0",
+    "masonic": "^4.1.0",
     "radix-ui": "^1.4.3",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
@@ -66,25 +67,25 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.15",
-    "@cloudflare/workers-types": "^4.20260515.1",
+    "@cloudflare/workers-types": "^4.20260519.1",
     "@rolldown/plugin-babel": "^0.2.3",
     "@tailwindcss/typography": "^0.5.19",
     "@tanstack/devtools-vite": "latest",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
     "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "^25.8.0",
+    "@types/node": "^25.9.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
     "babel-plugin-react-compiler": "^1.0.0",
     "dotenv": "^17.4.2",
     "jsdom": "^29.1.1",
-    "tsx": "^4.22.0",
+    "tsx": "^4.22.2",
     "typescript": "^6.0.3",
     "vite": "^8.0.13",
     "vitest": "^4.1.6",
-    "wrangler": "^4.91.0"
+    "wrangler": "^4.92.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

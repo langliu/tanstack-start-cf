@@ -252,7 +252,7 @@ function AgenciesPage() {
         }}
         open={drawerOpen}
       >
-        <DrawerContent className='border-border bg-card text-card-foreground'>
+        <DrawerContent className='admin-shell border-border bg-card text-card-foreground'>
           <DrawerHeader>
             <DrawerTitle>{drawerTitle}</DrawerTitle>
             <DrawerDescription>

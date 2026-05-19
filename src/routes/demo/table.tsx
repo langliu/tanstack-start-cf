@@ -18,6 +18,14 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import React from 'react'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/components/ui/select'
 import type { Person } from '#/data/demo-table-data'
 import { makeData } from '#/data/demo-table-data'
 
@@ -35,7 +43,7 @@ declare module '@tanstack/react-table' {
 }
 
 // Define a custom fuzzy filter function that will apply ranking info to rows (using match-sorter utils)
-const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
+const fuzzyFilter: FilterFn<Person> = (row, columnId, value, addMeta) => {
   // Rank the item
   const itemRank = rankItem(row.getValue(columnId), value)
 
@@ -49,15 +57,14 @@ const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
 }
 
 // Define a custom fuzzy sort function that will sort by rank if the row has ranking information
-const fuzzySort: SortingFn<any> = (rowA, rowB, columnId) => {
+const fuzzySort: SortingFn<Person> = (rowA, rowB, columnId) => {
   let dir = 0
 
   // Only sort by rank if the column has ranking information
-  if (rowA.columnFiltersMeta[columnId]) {
-    dir = compareItems(
-      rowA.columnFiltersMeta[columnId]?.itemRank!,
-      rowB.columnFiltersMeta[columnId]?.itemRank!,
-    )
+  const rowARank = rowA.columnFiltersMeta[columnId]?.itemRank
+  const rowBRank = rowB.columnFiltersMeta[columnId]?.itemRank
+  if (rowARank && rowBRank) {
+    dir = compareItems(rowARank, rowBRank)
   }
 
   // Provide an alphanumeric fallback for when the item ranks are equal
@@ -72,7 +79,7 @@ function TableDemo() {
   )
   const [globalFilter, setGlobalFilter] = React.useState('')
 
-  const columns = React.useMemo<ColumnDef<Person, any>[]>(
+  const columns = React.useMemo<ColumnDef<Person, unknown>[]>(
     () => [
       {
         accessorKey: 'id',
@@ -128,14 +135,17 @@ function TableDemo() {
     },
   })
 
+  const filteredColumnId = table.getState().columnFilters[0]?.id
+  const sortedColumnId = table.getState().sorting[0]?.id
+
   //apply the fuzzy sort if the fullName column is being filtered
   React.useEffect(() => {
-    if (table.getState().columnFilters[0]?.id === 'fullName') {
-      if (table.getState().sorting[0]?.id !== 'fullName') {
+    if (filteredColumnId === 'fullName') {
+      if (sortedColumnId !== 'fullName') {
         table.setSorting([{ desc: false, id: 'fullName' }])
       }
     }
-  }, [table.getState().columnFilters[0]?.id])
+  }, [filteredColumnId, sortedColumnId, table])
 
   return (
     <div className='min-h-screen bg-gray-900 p-6'>
@@ -221,6 +231,7 @@ function TableDemo() {
           className='px-3 py-1 bg-gray-800 rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
           disabled={!table.getCanPreviousPage()}
           onClick={() => table.setPageIndex(0)}
+          type='button'
         >
           {'<<'}
         </button>
@@ -228,6 +239,7 @@ function TableDemo() {
           className='px-3 py-1 bg-gray-800 rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
           disabled={!table.getCanPreviousPage()}
           onClick={() => table.previousPage()}
+          type='button'
         >
           {'<'}
         </button>
@@ -235,6 +247,7 @@ function TableDemo() {
           className='px-3 py-1 bg-gray-800 rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
           disabled={!table.getCanNextPage()}
           onClick={() => table.nextPage()}
+          type='button'
         >
           {'>'}
         </button>
@@ -242,6 +255,7 @@ function TableDemo() {
           className='px-3 py-1 bg-gray-800 rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
           disabled={!table.getCanNextPage()}
           onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+          type='button'
         >
           {'>>'}
         </button>
@@ -264,19 +278,25 @@ function TableDemo() {
             type='number'
           />
         </span>
-        <select
-          className='px-2 py-1 bg-gray-800 rounded-md border border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none'
-          onChange={(e) => {
-            table.setPageSize(Number(e.target.value))
+        <Select
+          onValueChange={(value) => {
+            table.setPageSize(Number(value))
           }}
-          value={table.getState().pagination.pageSize}
+          value={String(table.getState().pagination.pageSize)}
         >
-          {[10, 20, 30, 40, 50].map((pageSize) => (
-            <option key={pageSize} value={pageSize}>
-              Show {pageSize}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className='h-8 w-28 border-gray-700 bg-gray-800 text-white focus-visible:ring-blue-500'>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className='border-gray-700 bg-gray-800 text-white'>
+            <SelectGroup>
+              {[10, 20, 30, 40, 50].map((pageSize) => (
+                <SelectItem key={pageSize} value={String(pageSize)}>
+                  Show {pageSize}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </div>
       <div className='mt-4 text-gray-400'>
         {table.getPrePaginationRowModel().rows.length} Rows
@@ -285,12 +305,14 @@ function TableDemo() {
         <button
           className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors'
           onClick={() => rerender()}
+          type='button'
         >
           Force Rerender
         </button>
         <button
           className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors'
           onClick={() => refreshData()}
+          type='button'
         >
           Refresh Data
         </button>
@@ -309,7 +331,7 @@ function TableDemo() {
   )
 }
 
-function Filter({ column }: { column: Column<any, unknown> }) {
+function Filter({ column }: { column: Column<Person, unknown> }) {
   const columnFilterValue = column.getFilterValue()
 
   return (
@@ -346,7 +368,7 @@ function DebouncedInput({
     }, debounce)
 
     return () => clearTimeout(timeout)
-  }, [value])
+  }, [value, onChange, debounce])
 
   return (
     <input
