@@ -48,6 +48,7 @@ export async function deleteImageObjects(keys: string[]) {
 export async function storeUploadObjects(input: {
   imageId: string
   original: File
+  originalSha256?: string
   thumbnail?: File | null
 }) {
   assertImageFile(input.original, 'Original image')
@@ -59,7 +60,7 @@ export async function storeUploadObjects(input: {
   const original = await storeImageObject({
     file: input.original,
     key: createOriginalKey(input.imageId, input.original),
-    sha256: true,
+    sha256: input.originalSha256 ?? true,
   })
 
   const thumbnail = input.thumbnail
@@ -87,13 +88,23 @@ export async function storeModelAvatarObject(input: {
   })
 }
 
+export async function checksumImageFile(file: File, label: string) {
+  assertImageFile(file, label)
+  return sha256Hex(await file.arrayBuffer())
+}
+
 async function storeImageObject(input: {
   file: File
   key: string
-  sha256?: boolean
+  sha256?: boolean | string
 }) {
   const bytes = await input.file.arrayBuffer()
-  const sha256 = input.sha256 ? await sha256Hex(bytes) : undefined
+  const sha256 =
+    typeof input.sha256 === 'string'
+      ? input.sha256
+      : input.sha256
+        ? await sha256Hex(bytes)
+        : undefined
 
   await env.IMAGE_BUCKET.put(input.key, bytes, {
     httpMetadata: {

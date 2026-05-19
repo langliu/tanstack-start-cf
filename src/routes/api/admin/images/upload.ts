@@ -1,8 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
 import * as z from 'zod'
-import { createImageRecord } from '#/server/admin/assets'
+import {
+  createImageRecord,
+  findImageByChecksumSha256,
+} from '#/server/admin/assets'
 import { requireAdminSession } from '#/server/admin/auth'
-import { deleteImageObjects, storeUploadObjects } from '#/server/admin/storage'
+import {
+  checksumImageFile,
+  deleteImageObjects,
+  storeUploadObjects,
+} from '#/server/admin/storage'
 import { createId } from '#/server/admin/utils'
 
 const UploadMetadataSchema = z.object({
@@ -26,14 +33,39 @@ async function upload({ request }: { request: Request }) {
     const original = getFile(formData, 'original')
     const thumbnail = getOptionalFile(formData, 'thumbnail')
     const metadata = parseMetadata(formData.get('metadata'))
+    const checksumSha256 = await checksumImageFile(original, 'Original image')
+    const existingImage = await findImageByChecksumSha256(checksumSha256)
+
+    if (existingImage) {
+      return Response.json(
+        { duplicate: true, image: existingImage },
+        { status: 200 },
+      )
+    }
+
     const imageId = createId()
     const storage = await storeUploadObjects({
       imageId,
       original,
+      originalSha256: checksumSha256,
       thumbnail,
     })
 
+    const uploadedKeys = [
+      storage.original.key,
+      ...(storage.thumbnail ? [storage.thumbnail.key] : []),
+    ]
+
     try {
+      const duplicateImage = await findImageByChecksumSha256(checksumSha256)
+      if (duplicateImage) {
+        await deleteImageObjects(uploadedKeys)
+        return Response.json(
+          { duplicate: true, image: duplicateImage },
+          { status: 200 },
+        )
+      }
+
       const image = await createImageRecord({
         ...metadata,
         id: imageId,
@@ -44,10 +76,18 @@ async function upload({ request }: { request: Request }) {
 
       return Response.json({ image }, { status: 201 })
     } catch (error) {
-      await deleteImageObjects([
-        storage.original.key,
-        ...(storage.thumbnail ? [storage.thumbnail.key] : []),
-      ])
+      await deleteImageObjects(uploadedKeys)
+
+      if (isChecksumUniqueConstraintError(error)) {
+        const duplicateImage = await findImageByChecksumSha256(checksumSha256)
+        if (duplicateImage) {
+          return Response.json(
+            { duplicate: true, image: duplicateImage },
+            { status: 200 },
+          )
+        }
+      }
+
       throw error
     }
   } catch (error) {
@@ -89,6 +129,15 @@ function parseMetadata(value: FormDataEntryValue | null) {
   }
 
   return UploadMetadataSchema.parse(JSON.parse(value))
+}
+
+function isChecksumUniqueConstraintError(error: unknown) {
+  return (
+    error instanceof Error &&
+    /(?:UNIQUE constraint failed: images\.checksum_sha256|images_checksum_sha256_unique)/i.test(
+      error.message,
+    )
+  )
 }
 
 export const Route = createFileRoute('/api/admin/images/upload')({

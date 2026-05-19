@@ -1,4 +1,4 @@
-import { relations, sql } from 'drizzle-orm'
+import { isNotNull, relations, sql } from 'drizzle-orm'
 import {
   index,
   integer,
@@ -144,6 +144,9 @@ export const images = sqliteTable(
   },
   (table) => [
     index('images_album_id_idx').on(table.albumId),
+    uniqueIndex('images_checksum_sha256_unique')
+      .on(table.checksumSha256)
+      .where(isNotNull(table.checksumSha256)),
     index('images_created_at_idx').on(table.createdAt),
     index('images_processing_status_idx').on(table.processingStatus),
     index('images_uploaded_by_user_id_idx').on(table.uploadedByUserId),

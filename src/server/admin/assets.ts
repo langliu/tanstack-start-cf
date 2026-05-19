@@ -549,6 +549,33 @@ export async function getImageDetail(id: string) {
   return formatImage(row, relationMaps)
 }
 
+export async function findImageByChecksumSha256(checksumSha256: string) {
+  const normalizedChecksum = checksumSha256.trim().toLowerCase()
+  if (normalizedChecksum.length === 0) {
+    return null
+  }
+
+  const [row] = await db
+    .select({
+      agency: agencies,
+      album: albums,
+      image: images,
+    })
+    .from(images)
+    .leftJoin(albums, eq(images.albumId, albums.id))
+    .leftJoin(agencies, eq(albums.agencyId, agencies.id))
+    .where(eq(images.checksumSha256, normalizedChecksum))
+    .orderBy(desc(images.uploadedAt), desc(images.id))
+    .limit(1)
+
+  if (!row) {
+    return null
+  }
+
+  const relationMaps = await fetchImageRelationMaps([row.image.id])
+  return formatImage(row, relationMaps)
+}
+
 export async function createImageRecord(input: CreateImageRecordInput) {
   const id = input.id ?? createId()
   const date = now()

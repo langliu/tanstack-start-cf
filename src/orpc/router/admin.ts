@@ -14,6 +14,7 @@ import {
   deleteImages,
   deleteModel,
   deleteTag,
+  findImageByChecksumSha256,
   getAlbum,
   getImageDetail,
   listAgencies,
@@ -123,6 +124,10 @@ const ImageUpdateInputSchema = z.object({
   width: z.number().int().positive().nullable().optional(),
 })
 
+const ImageChecksumInputSchema = z.object({
+  checksumSha256: z.string().trim().regex(/^[a-f0-9]{64}$/i),
+})
+
 function requireFound<T>(value: T | null | undefined) {
   if (!value) {
     throw new ORPCError('NOT_FOUND')
@@ -182,6 +187,11 @@ export const admin = {
       .input(z.object({ id: IdSchema }))
       .handler(async ({ input }) =>
         requireFound(await getImageDetail(input.id)),
+      ),
+    findByChecksum: adminProcedure
+      .input(ImageChecksumInputSchema)
+      .handler(({ input }) =>
+        findImageByChecksumSha256(input.checksumSha256),
       ),
     list: adminProcedure
       .input(ImageListInputSchema)

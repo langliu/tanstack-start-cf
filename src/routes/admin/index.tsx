@@ -76,6 +76,7 @@ export const Route = createFileRoute('/admin/')({
 })
 
 type UploadResult = {
+  dominantColors?: string[]
   height?: number
   thumbnail?: File
   width?: number
@@ -103,6 +104,7 @@ type ImageDetail = {
   albumId: null | string
   contentType: string
   createdAt: Date | number | string
+  dominantColors: null | string[]
   fileSize: number
   height: null | number
   id: string
@@ -139,10 +141,10 @@ const FILTER_TABS: { key: LibraryFilter; label: string }[] = [
 ]
 
 const IMAGE_PAGE_SIZE = 120
-const MASONRY_COLUMN_WIDTH = 128
+const MASONRY_COLUMN_WIDTH = 180
 const MASONRY_GUTTER = 12
 const MASONRY_LOAD_AHEAD = 20
-const MASONRY_MAX_COLUMNS = 9
+const MASONRY_MAX_COLUMNS = 7
 const MASONRY_OVERSCAN_BY = 2
 const NO_TAG_VALUE = '__no_tag__'
 const NO_ALBUM_VALUE = '__no_album__'
@@ -168,6 +170,7 @@ function LibraryPage() {
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null)
   const [imageGridVersion, setImageGridVersion] = useState(0)
   const [uploadError, setUploadError] = useState('')
+  const [uploadNotice, setUploadNotice] = useState('')
   const [uploading, setUploading] = useState(false)
 
   const albumsQuery = useQuery(
@@ -267,6 +270,7 @@ function LibraryPage() {
 
   async function uploadFiles(files: FileList | null) {
     setUploadError('')
+    setUploadNotice('')
 
     if (!files || files.length === 0) {
       return
@@ -274,7 +278,25 @@ function LibraryPage() {
 
     setUploading(true)
     try {
+      let skippedDuplicates = 0
+      const uploadedChecksums = new Set<string>()
+
       for (const file of Array.from(files)) {
+        const checksumSha256 = await sha256File(file)
+        if (uploadedChecksums.has(checksumSha256)) {
+          skippedDuplicates += 1
+          continue
+        }
+
+        const existingImage = await orpc.admin.images.findByChecksum.call({
+          checksumSha256,
+        })
+        if (existingImage) {
+          skippedDuplicates += 1
+          uploadedChecksums.add(checksumSha256)
+          continue
+        }
+
         const prepared = await prepareUpload(file)
         const formData = new FormData()
         formData.append('original', file)
@@ -284,6 +306,7 @@ function LibraryPage() {
         formData.append(
           'metadata',
           JSON.stringify({
+            dominantColors: prepared.dominantColors,
             height: prepared.height,
             title: filenameStem(file.name),
             width: prepared.width,
@@ -301,9 +324,20 @@ function LibraryPage() {
           } | null
           throw new Error(payload?.error ?? '上传失败')
         }
+
+        const payload = (await response.json().catch(() => null)) as {
+          duplicate?: boolean
+        } | null
+        if (payload?.duplicate) {
+          skippedDuplicates += 1
+        }
+        uploadedChecksums.add(checksumSha256)
       }
       await invalidateAdminQueries(queryClient)
       setImageGridVersion((version) => version + 1)
+      if (skippedDuplicates > 0) {
+        setUploadNotice(`已跳过 ${skippedDuplicates} 张重复图片`)
+      }
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : '上传失败')
     } finally {
@@ -435,6 +469,11 @@ function LibraryPage() {
       {uploadError ? (
         <div className='border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-destructive text-sm'>
           {uploadError}
+        </div>
+      ) : null}
+      {uploadNotice ? (
+        <div className='border-b border-[#73e0d3]/30 bg-[#73e0d3]/10 px-4 py-2 text-[#9de9df] text-sm'>
+          {uploadNotice}
         </div>
       ) : null}
 
@@ -776,14 +815,14 @@ function ImageMasonryCard({
   return (
     <article
       className={cn(
-        'group rounded-md border bg-card p-1 transition hover:border-ring',
-        selected && 'border-primary',
+        'group rounded-md border border-transparent bg-transparent p-0 transition hover:border-ring',
+        selected && 'border-primary ring-1 ring-primary',
       )}
       style={{ width }}
     >
       <div className='relative'>
         <button
-          className='block w-full overflow-hidden rounded bg-background'
+          className='block w-full overflow-hidden rounded-md bg-background'
           onClick={() => onFocus(image.id)}
           onDoubleClick={() => onPreview(image)}
           type='button'
@@ -794,9 +833,6 @@ function ImageMasonryCard({
             loading='lazy'
             src={image.thumbnailUrl}
           />
-          <Badge className='absolute top-2 left-2 uppercase' variant='secondary'>
-            {fileExtension(image.originalFilename)}
-          </Badge>
         </button>
         <Checkbox
           checked={checked}
@@ -805,17 +841,6 @@ function ImageMasonryCard({
           title='选择图片'
         />
       </div>
-      <button
-        className='block w-full px-1.5 pt-2 pb-1 text-left'
-        onClick={() => onFocus(image.id)}
-        onDoubleClick={() => onPreview(image)}
-        type='button'
-      >
-        <p className='truncate font-medium text-sm'>{image.title}</p>
-        <p className='truncate text-muted-foreground text-xs'>
-          {image.album?.name ?? '未专辑'} · {formatFileSize(image.fileSize)}
-        </p>
-      </button>
     </article>
   )
 }
@@ -1060,6 +1085,24 @@ function ImageDetailsPanel({
             ))}
           </div>
         </section>
+
+        {image.dominantColors?.length ? (
+          <section className='border-[#333331] border-t pt-4'>
+            <p className='mb-3 font-semibold text-[#bfc2bd] text-sm'>
+              主要色彩
+            </p>
+            <div className='flex flex-wrap gap-2'>
+              {image.dominantColors.map((color) => (
+                <span
+                  className='size-6 rounded-full border border-white/15 shadow-[0_0_0_1px_rgba(0,0,0,0.25)]'
+                  key={color}
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <section className='border-[#333331] border-t pt-4'>
           <p className='mb-2 font-semibold text-[#bfc2bd] text-sm'>专辑</p>
@@ -1527,6 +1570,7 @@ function useElementScrollState(element: HTMLElement | null) {
 async function prepareUpload(file: File): Promise<UploadResult> {
   try {
     const bitmap = await createImageBitmap(file)
+    const dominantColors = extractDominantColors(bitmap)
     const maxSide = 720
     const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height))
     const width = Math.max(1, Math.round(bitmap.width * scale))
@@ -1538,7 +1582,7 @@ async function prepareUpload(file: File): Promise<UploadResult> {
 
     if (!context) {
       bitmap.close()
-      return { height: bitmap.height, width: bitmap.width }
+      return { dominantColors, height: bitmap.height, width: bitmap.width }
     }
 
     context.drawImage(bitmap, 0, 0, width, height)
@@ -1546,6 +1590,7 @@ async function prepareUpload(file: File): Promise<UploadResult> {
       canvas.toBlob(resolve, 'image/webp', 0.82),
     )
     const result = {
+      dominantColors,
       height: bitmap.height,
       thumbnail: blob
         ? new File([blob], `${filenameStem(file.name)}.webp`, {
@@ -1561,14 +1606,107 @@ async function prepareUpload(file: File): Promise<UploadResult> {
   }
 }
 
+function extractDominantColors(bitmap: ImageBitmap) {
+  try {
+    const maxSide = 64
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height))
+    const width = Math.max(1, Math.round(bitmap.width * scale))
+    const height = Math.max(1, Math.round(bitmap.height * scale))
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    const context = canvas.getContext('2d', { willReadFrequently: true })
+
+    if (!context) {
+      return []
+    }
+
+    context.drawImage(bitmap, 0, 0, width, height)
+    const data = context.getImageData(0, 0, width, height).data
+    const buckets = new Map<
+      string,
+      { blue: number; count: number; green: number; red: number }
+    >()
+    const bucketSize = 32
+
+    for (let index = 0; index < data.length; index += 4) {
+      const alpha = data[index + 3]
+      if (alpha < 128) {
+        continue
+      }
+
+      const red = data[index]
+      const green = data[index + 1]
+      const blue = data[index + 2]
+      const key = [
+        Math.floor(red / bucketSize),
+        Math.floor(green / bucketSize),
+        Math.floor(blue / bucketSize),
+      ].join(':')
+      const bucket = buckets.get(key) ?? {
+        blue: 0,
+        count: 0,
+        green: 0,
+        red: 0,
+      }
+
+      bucket.red += red
+      bucket.green += green
+      bucket.blue += blue
+      bucket.count += 1
+      buckets.set(key, bucket)
+    }
+
+    const selected: Array<{ blue: number; green: number; red: number }> = []
+
+    for (const bucket of Array.from(buckets.values()).sort(
+      (left, right) => right.count - left.count,
+    )) {
+      const color = {
+        blue: Math.round(bucket.blue / bucket.count),
+        green: Math.round(bucket.green / bucket.count),
+        red: Math.round(bucket.red / bucket.count),
+      }
+
+      if (selected.some((existing) => colorDistance(existing, color) < 48)) {
+        continue
+      }
+
+      selected.push(color)
+      if (selected.length >= 7) {
+        break
+      }
+    }
+
+    return selected.map(rgbToHex)
+  } catch {
+    return []
+  }
+}
+
+function colorDistance(
+  left: { blue: number; green: number; red: number },
+  right: { blue: number; green: number; red: number },
+) {
+  return Math.hypot(left.red - right.red, left.green - right.green, left.blue - right.blue)
+}
+
+function rgbToHex(color: { blue: number; green: number; red: number }) {
+  return `#${[color.red, color.green, color.blue]
+    .map((value) => value.toString(16).padStart(2, '0'))
+    .join('')}`
+}
+
+async function sha256File(file: File) {
+  const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer())
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('')
+}
+
 function filenameStem(filename: string) {
   const dot = filename.lastIndexOf('.')
   return dot > 0 ? filename.slice(0, dot) : filename
-}
-
-function fileExtension(filename: string) {
-  const dot = filename.lastIndexOf('.')
-  return dot > -1 ? filename.slice(dot + 1) : 'IMG'
 }
 
 function formatFileSize(bytes: number) {
