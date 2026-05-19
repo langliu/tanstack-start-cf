@@ -11,6 +11,7 @@ import {
   Images,
   Loader2,
   Tags,
+  Trash2,
   UserRound,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -200,6 +201,13 @@ function AdminSidebar({ userEmail }: { userEmail: string }) {
             onClick={() =>
               navigate({ search: { filter: 'unalbumed' }, to: '/admin' })
             }
+          />
+          <SidebarButton
+            active={pathname === '/admin/trash'}
+            count={statsQuery.data?.trash}
+            icon={<Trash2 />}
+            label='回收站'
+            onClick={() => navigate({ to: '/admin/trash' })}
           />
         </div>
 

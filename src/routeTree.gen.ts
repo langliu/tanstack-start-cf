@@ -19,6 +19,7 @@ import { Route as DemoOrpcTodoRouteImport } from './routes/demo/orpc-todo'
 import { Route as DemoDrizzleRouteImport } from './routes/demo/drizzle'
 import { Route as DemoBetterAuthRouteImport } from './routes/demo/better-auth'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
+import { Route as AdminTrashRouteImport } from './routes/admin/trash'
 import { Route as AdminTagsRouteImport } from './routes/admin/tags'
 import { Route as AdminModelsRouteImport } from './routes/admin/models'
 import { Route as AdminAgenciesRouteImport } from './routes/admin/agencies'
@@ -83,6 +84,11 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
   id: '/api/$',
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminTrashRoute = AdminTrashRouteImport.update({
+  id: '/trash',
+  path: '/trash',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminTagsRoute = AdminTagsRouteImport.update({
   id: '/tags',
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/admin/agencies': typeof AdminAgenciesRoute
   '/admin/models': typeof AdminModelsRoute
   '/admin/tags': typeof AdminTagsRoute
+  '/admin/trash': typeof AdminTrashRoute
   '/api/$': typeof ApiSplatRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/drizzle': typeof DemoDrizzleRoute
@@ -189,6 +196,7 @@ export interface FileRoutesByTo {
   '/admin/agencies': typeof AdminAgenciesRoute
   '/admin/models': typeof AdminModelsRoute
   '/admin/tags': typeof AdminTagsRoute
+  '/admin/trash': typeof AdminTrashRoute
   '/api/$': typeof ApiSplatRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/drizzle': typeof DemoDrizzleRoute
@@ -216,6 +224,7 @@ export interface FileRoutesById {
   '/admin/agencies': typeof AdminAgenciesRoute
   '/admin/models': typeof AdminModelsRoute
   '/admin/tags': typeof AdminTagsRoute
+  '/admin/trash': typeof AdminTrashRoute
   '/api/$': typeof ApiSplatRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/drizzle': typeof DemoDrizzleRoute
@@ -244,6 +253,7 @@ export interface FileRouteTypes {
     | '/admin/agencies'
     | '/admin/models'
     | '/admin/tags'
+    | '/admin/trash'
     | '/api/$'
     | '/demo/better-auth'
     | '/demo/drizzle'
@@ -268,6 +278,7 @@ export interface FileRouteTypes {
     | '/admin/agencies'
     | '/admin/models'
     | '/admin/tags'
+    | '/admin/trash'
     | '/api/$'
     | '/demo/better-auth'
     | '/demo/drizzle'
@@ -294,6 +305,7 @@ export interface FileRouteTypes {
     | '/admin/agencies'
     | '/admin/models'
     | '/admin/tags'
+    | '/admin/trash'
     | '/api/$'
     | '/demo/better-auth'
     | '/demo/drizzle'
@@ -404,6 +416,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/$'
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/trash': {
+      id: '/admin/trash'
+      path: '/trash'
+      fullPath: '/admin/trash'
+      preLoaderRoute: typeof AdminTrashRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/admin/tags': {
       id: '/admin/tags'
@@ -524,6 +543,7 @@ interface AdminRouteRouteChildren {
   AdminAgenciesRoute: typeof AdminAgenciesRoute
   AdminModelsRoute: typeof AdminModelsRoute
   AdminTagsRoute: typeof AdminTagsRoute
+  AdminTrashRoute: typeof AdminTrashRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -532,6 +552,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminAgenciesRoute: AdminAgenciesRoute,
   AdminModelsRoute: AdminModelsRoute,
   AdminTagsRoute: AdminTagsRoute,
+  AdminTrashRoute: AdminTrashRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 

@@ -115,6 +115,7 @@ export const images = sqliteTable(
     checksumSha256: text('checksum_sha256'),
     contentType: text('content_type').notNull(),
     ...timestamps(),
+    deletedAt: integer('deleted_at', { mode: 'timestamp_ms' }),
     dominantColors: text('dominant_colors', { mode: 'json' }).$type<string[]>(),
     exif: text({ mode: 'json' }).$type<Record<string, unknown>>(),
     filename: text().notNull(),
@@ -148,6 +149,7 @@ export const images = sqliteTable(
       .on(table.checksumSha256)
       .where(isNotNull(table.checksumSha256)),
     index('images_created_at_idx').on(table.createdAt),
+    index('images_deleted_at_idx').on(table.deletedAt),
     index('images_processing_status_idx').on(table.processingStatus),
     index('images_uploaded_by_user_id_idx').on(table.uploadedByUserId),
     index('images_uploaded_at_idx').on(table.uploadedAt),

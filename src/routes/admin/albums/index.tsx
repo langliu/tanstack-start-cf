@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import {
   Edit,
   FolderOpen,
+  ImageIcon,
   Loader2,
   Plus,
   Search,
@@ -48,6 +49,11 @@ const NO_AGENCY_VALUE = '__no_agency__'
 type AlbumRow = {
   agency?: { id: string; name: string } | null
   agencyId?: string | null
+  coverImage?: {
+    id: string
+    thumbnailUrl: string
+    title: string
+  } | null
   createdAt: string | number | Date
   id: string
   name: string
@@ -226,6 +232,7 @@ function AlbumsIndexPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className='w-[120px]'>封面</TableHead>
                   <TableHead>名称</TableHead>
                   <TableHead>机构</TableHead>
                   <TableHead>排序</TableHead>
@@ -239,7 +246,7 @@ function AlbumsIndexPage() {
                   <TableRow>
                     <TableCell
                       className='py-12 text-center text-muted-foreground'
-                      colSpan={6}
+                      colSpan={7}
                     >
                       暂无数据
                     </TableCell>
@@ -249,6 +256,9 @@ function AlbumsIndexPage() {
                   items.map((album) => {
                     return (
                       <TableRow key={album.id}>
+                        <TableCell>
+                          <AlbumCoverThumb album={album} />
+                        </TableCell>
                         <TableCell className='max-w-0 font-medium'>
                           <button
                             className='block max-w-full truncate text-left hover:text-primary'
@@ -449,5 +459,24 @@ function AlbumsIndexPage() {
         </SheetContent>
       </Sheet>
     </section>
+  )
+}
+
+function AlbumCoverThumb({ album }: { album: AlbumRow }) {
+  if (!album.coverImage) {
+    return (
+      <div className='grid h-20 w-[120px] place-items-center rounded-md border bg-background text-muted-foreground'>
+        <ImageIcon className='size-4' />
+      </div>
+    )
+  }
+
+  return (
+    <img
+      alt={album.coverImage.title}
+      className='h-auto w-[120px] rounded-md border object-contain'
+      loading='lazy'
+      src={album.coverImage.thumbnailUrl}
+    />
   )
 }

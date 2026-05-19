@@ -23,6 +23,7 @@ import {
   listLibraryStats,
   listModels,
   listTags,
+  setAlbumCoverImage,
   updateAgency,
   updateAlbum,
   updateImage,
@@ -55,6 +56,7 @@ const AgencyUpdateInputSchema = AgencyInputSchema.partial().extend({
 
 const AlbumInputSchema = z.object({
   agencyId: IdSchema.nullable().optional(),
+  coverImageId: IdSchema.nullable().optional(),
   description: LongTextSchema,
   name: NameSchema,
   notes: LongTextSchema,
@@ -101,7 +103,7 @@ const ModelUpdateInputSchema = ModelInputSchema.partial()
 const ImageListInputSchema = z.object({
   agencyId: IdSchema.optional(),
   albumId: IdSchema.optional(),
-  filter: z.enum(['all', 'unalbumed', 'untagged']).optional(),
+  filter: z.enum(['all', 'trash', 'unalbumed', 'untagged']).optional(),
   limit: z.number().int().min(1).max(120).optional(),
   modelId: IdSchema.optional(),
   offset: z.number().int().min(0).optional(),
@@ -166,6 +168,11 @@ export const admin = {
     list: adminProcedure
       .input(AlbumListInputSchema)
       .handler(({ input }) => listAlbums(input)),
+    setCover: adminProcedure
+      .input(z.object({ albumId: IdSchema, imageId: IdSchema }))
+      .handler(async ({ input }) =>
+        requireFound(await setAlbumCoverImage(input)),
+      ),
     update: adminProcedure
       .input(AlbumUpdateInputSchema)
       .handler(async ({ input }) => requireFound(await updateAlbum(input))),

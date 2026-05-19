@@ -1,17 +1,46 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { ArrowLeft, FolderOpen, Loader2 } from 'lucide-react'
+import { ArrowLeft, FolderOpen, ImageIcon, Loader2 } from 'lucide-react'
+import {
+  type RenderComponentProps,
+  useMasonry,
+  usePositioner,
+  useResizeObserver,
+} from 'masonic'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '#/components/ui/context-menu'
+import { cn } from '#/lib/utils'
 import { orpc } from '#/orpc/client'
+import { invalidateAdminQueries } from '../route'
 
 export const Route = createFileRoute('/admin/albums/$albumId')({
   component: AlbumDetailPage,
 })
 
+const MASONRY_COLUMN_WIDTH = 180
+const MASONRY_GUTTER = 12
+const MASONRY_MAX_COLUMNS = 7
+const MASONRY_OVERSCAN_BY = 2
+
+type AlbumImage = {
+  height?: number | null
+  id: string
+  thumbnailUrl: string
+  title: string
+  width?: number | null
+}
+
 function AlbumDetailPage() {
   const { albumId } = Route.useParams()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const albumQuery = useQuery(
     orpc.admin.albums.detail.queryOptions({ input: { id: albumId } }),
@@ -25,6 +54,7 @@ function AlbumDetailPage() {
   const album = albumQuery.data as
     | {
         agency?: { id: string; name: string } | null
+        coverImageId?: string | null
         id: string
         name: string
         sortOrder: number
@@ -34,19 +64,17 @@ function AlbumDetailPage() {
 
   const imagesData = imagesQuery.data as
     | {
-        items?: Array<{
-          filename: string
-          height?: number | null
-          id: string
-          thumbnailUrl: string
-          title: string
-          width?: number | null
-        }>
+        items?: AlbumImage[]
         total?: number
       }
     | undefined
 
   const images = imagesData?.items ?? []
+  const setCoverMutation = useMutation({
+    mutationFn: (imageId: string) =>
+      orpc.admin.albums.setCover.call({ albumId, imageId }),
+    onSuccess: () => invalidateAdminQueries(queryClient),
+  })
 
   if (albumQuery.isLoading) {
     return (
@@ -97,7 +125,7 @@ function AlbumDetailPage() {
           {imagesData?.total ?? 0} 张图片
         </span>
       </div>
-      <div className='min-h-0 flex-1 overflow-y-auto p-4'>
+      <div className='min-h-0 flex-1 overflow-hidden p-4'>
         {imagesQuery.isLoading ? (
           <div className='grid place-items-center py-16'>
             <Loader2 className='size-7 animate-spin text-primary' />
@@ -107,31 +135,231 @@ function AlbumDetailPage() {
             暂无图片
           </div>
         ) : (
-          <div className='grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3'>
-            {images.map((img) => (
-              <div
-                className='group relative overflow-hidden rounded-md border bg-card'
-                key={img.id}
-              >
-                {img.thumbnailUrl ? (
-                  <img
-                    alt={img.title}
-                    className='aspect-[3/4] w-full object-cover'
-                    src={img.thumbnailUrl}
-                  />
-                ) : (
-                  <div className='flex aspect-[3/4] w-full items-center justify-center bg-background text-muted-foreground text-xs'>
-                    无预览
-                  </div>
-                )}
-                <div className='absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2'>
-                  <p className='truncate text-xs'>{img.title}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <AlbumMasonryGrid
+            coverImageId={album.coverImageId ?? null}
+            images={images}
+            onSetCover={(imageId) => setCoverMutation.mutate(imageId)}
+            resetKey={albumId}
+            settingCoverImageId={
+              setCoverMutation.isPending
+                ? (setCoverMutation.variables ?? null)
+                : null
+            }
+          />
         )}
       </div>
     </section>
   )
+}
+
+function AlbumMasonryGrid({
+  coverImageId,
+  images,
+  onSetCover,
+  resetKey,
+  settingCoverImageId,
+}: {
+  coverImageId: null | string
+  images: AlbumImage[]
+  onSetCover: (imageId: string) => void
+  resetKey: string
+  settingCoverImageId: null | string
+}) {
+  const [containerElement, setContainerElement] =
+    useState<HTMLDivElement | null>(null)
+  const masonryRef = useRef<HTMLElement | null>(null)
+  const handleContainerRef = useCallback(
+    (element: HTMLDivElement | null) => setContainerElement(element),
+    [],
+  )
+  const containerSize = useElementSize(containerElement)
+  const { handleScroll, isScrolling, scrollTop } =
+    useElementScrollState(containerElement)
+  const positioner = usePositioner(
+    {
+      columnGutter: MASONRY_GUTTER,
+      columnWidth: MASONRY_COLUMN_WIDTH,
+      maxColumnCount: MASONRY_MAX_COLUMNS,
+      rowGutter: MASONRY_GUTTER,
+      width: Math.max(1, containerSize.width),
+    },
+    [resetKey],
+  )
+  const resizeObserver = useResizeObserver(positioner)
+  const renderCard = useCallback(
+    ({ data: image, width }: RenderComponentProps<AlbumImage>) =>
+      image ? (
+        <AlbumMasonryCard
+          image={image}
+          isCover={coverImageId === image.id}
+          onSetCover={onSetCover}
+          settingCover={settingCoverImageId === image.id}
+          width={width}
+        />
+      ) : (
+        <div aria-hidden style={{ width }} />
+      ),
+    [coverImageId, onSetCover, settingCoverImageId],
+  )
+  const masonry = useMasonry({
+    className: 'relative w-full outline-none',
+    containerRef: masonryRef,
+    height: Math.max(1, containerSize.height),
+    isScrolling,
+    itemHeightEstimate: 220,
+    itemKey: (image, index) => image?.id ?? `missing-${resetKey}-${index}`,
+    items: images,
+    overscanBy: MASONRY_OVERSCAN_BY,
+    positioner,
+    render: renderCard,
+    resizeObserver,
+    role: 'list',
+    scrollTop,
+    tabIndex: -1,
+  })
+
+  return (
+    <div
+      className='h-full min-h-0 overflow-y-auto'
+      onScroll={handleScroll}
+      ref={handleContainerRef}
+    >
+      {masonry}
+    </div>
+  )
+}
+
+function AlbumMasonryCard({
+  image,
+  isCover,
+  onSetCover,
+  settingCover,
+  width,
+}: {
+  image: AlbumImage
+  isCover: boolean
+  onSetCover: (imageId: string) => void
+  settingCover: boolean
+  width: number
+}) {
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <article
+          className={cn(
+            'group rounded-md border border-transparent bg-transparent p-0 transition hover:border-ring',
+            isCover && 'border-primary ring-1 ring-primary',
+          )}
+          style={{ width }}
+        >
+          <div className='relative overflow-hidden rounded-md bg-background'>
+            {image.thumbnailUrl ? (
+              <img
+                alt={image.title}
+                className='h-auto w-full object-cover'
+                loading='lazy'
+                src={image.thumbnailUrl}
+              />
+            ) : (
+              <div
+                className={cn(
+                  'grid w-full place-items-center bg-background text-muted-foreground text-xs',
+                  'aspect-[3/4]',
+                )}
+              >
+                无预览
+              </div>
+            )}
+            {isCover ? (
+              <Badge className='absolute top-2 left-2 gap-1 shadow-sm'>
+                <ImageIcon className='size-3' />
+                封面
+              </Badge>
+            ) : null}
+          </div>
+        </article>
+      </ContextMenuTrigger>
+      <ContextMenuContent className='admin-shell'>
+        <ContextMenuItem
+          disabled={isCover || settingCover}
+          onSelect={() => onSetCover(image.id)}
+        >
+          <ImageIcon className='size-4' />
+          {isCover ? '已是专辑封面' : settingCover ? '正在设置...' : '设为专辑封面'}
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
+  )
+}
+
+function useElementSize(element: HTMLElement | null) {
+  const [size, setSize] = useState({ height: 0, width: 0 })
+
+  useEffect(() => {
+    if (!element) {
+      return
+    }
+
+    function updateSize() {
+      setSize({
+        height: element.clientHeight,
+        width: element.clientWidth,
+      })
+    }
+
+    updateSize()
+
+    if (typeof ResizeObserver === 'undefined') {
+      return
+    }
+
+    const observer = new ResizeObserver(updateSize)
+    observer.observe(element)
+
+    return () => observer.disconnect()
+  }, [element])
+
+  return size
+}
+
+function useElementScrollState(element: HTMLElement | null) {
+  const frameRef = useRef<number | null>(null)
+  const scrollEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [scrollTop, setScrollTop] = useState(0)
+  const [isScrolling, setIsScrolling] = useState(false)
+
+  const handleScroll = useCallback(() => {
+    if (!element || frameRef.current !== null) {
+      return
+    }
+
+    frameRef.current = requestAnimationFrame(() => {
+      frameRef.current = null
+      setScrollTop(element?.scrollTop ?? 0)
+      setIsScrolling(true)
+
+      if (scrollEndTimerRef.current) {
+        clearTimeout(scrollEndTimerRef.current)
+      }
+
+      scrollEndTimerRef.current = setTimeout(() => {
+        setIsScrolling(false)
+        scrollEndTimerRef.current = null
+      }, 120)
+    })
+  }, [element])
+
+  useEffect(
+    () => () => {
+      if (frameRef.current !== null) {
+        cancelAnimationFrame(frameRef.current)
+      }
+      if (scrollEndTimerRef.current) {
+        clearTimeout(scrollEndTimerRef.current)
+      }
+    },
+    [],
+  )
+
+  return { handleScroll, isScrolling, scrollTop }
 }

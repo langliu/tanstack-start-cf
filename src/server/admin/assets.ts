@@ -8,8 +8,10 @@ import {
   eq,
   exists,
   inArray,
+  isNotNull,
   isNull,
   like,
+  ne,
   notExists,
   or,
 } from 'drizzle-orm'
@@ -46,6 +48,15 @@ type JoinedImageRow = {
   image: Image
 }
 
+type AlbumCover = {
+  albumId: null | string
+  height: null | number
+  id: string
+  thumbnailUrl: string
+  title: string
+  width: null | number
+}
+
 export type CreateImageRecordInput = {
   albumId?: null | string
   dominantColors?: string[]
@@ -67,7 +78,7 @@ export type CreateImageRecordInput = {
 export type ListImagesInput = {
   agencyId?: string
   albumId?: string
-  filter?: 'all' | 'unalbumed' | 'untagged'
+  filter?: 'all' | 'trash' | 'unalbumed' | 'untagged'
   limit?: number
   modelId?: string
   offset?: number
@@ -76,24 +87,36 @@ export type ListImagesInput = {
 }
 
 export async function listLibraryStats() {
-  const [total] = await db.select({ value: count() }).from(images)
+  const activeImage = isNull(images.deletedAt)
+  const [total] = await db
+    .select({ value: count() })
+    .from(images)
+    .where(activeImage)
   const [untagged] = await db
     .select({ value: count() })
     .from(images)
     .where(
-      notExists(
-        db
-          .select({ imageId: imageTags.imageId })
-          .from(imageTags)
-          .where(eq(imageTags.imageId, images.id)),
+      and(
+        activeImage,
+        notExists(
+          db
+            .select({ imageId: imageTags.imageId })
+            .from(imageTags)
+            .where(eq(imageTags.imageId, images.id)),
+        ),
       ),
     )
   const [unalbumed] = await db
     .select({ value: count() })
     .from(images)
-    .where(isNull(images.albumId))
+    .where(and(activeImage, isNull(images.albumId)))
+  const [trash] = await db
+    .select({ value: count() })
+    .from(images)
+    .where(isNotNull(images.deletedAt))
 
   return {
+    trash: trash?.value ?? 0,
     total: total?.value ?? 0,
     unalbumed: unalbumed?.value ?? 0,
     untagged: untagged?.value ?? 0,
@@ -213,13 +236,19 @@ export async function listAlbums(
       agency: true,
     },
   })
+  const coverMap = await fetchAlbumCoverMap(items)
 
   const [totalResult] = await db
     .select({ value: count() })
     .from(albums)
     .where(where)
 
-  return { items, total: totalResult?.value ?? 0, limit, offset }
+  return {
+    items: items.map((album) => formatAlbum(album, coverMap)),
+    total: totalResult?.value ?? 0,
+    limit,
+    offset,
+  }
 }
 
 export async function createAlbum(input: {
@@ -251,6 +280,7 @@ export async function createAlbum(input: {
 
 export async function updateAlbum(input: {
   agencyId?: null | string
+  coverImageId?: null | string
   description?: null | string
   id: string
   name?: string
@@ -267,6 +297,9 @@ export async function updateAlbum(input: {
   }
   if (input.agencyId !== undefined) {
     values.agencyId = input.agencyId
+  }
+  if (input.coverImageId !== undefined) {
+    values.coverImageId = input.coverImageId
   }
   if (input.description !== undefined) {
     values.description = nullableText(input.description)
@@ -298,7 +331,41 @@ export async function getAlbum(id: string) {
     where: eq(albums.id, id),
     with: { agency: true },
   })
-  return row ?? null
+  if (!row) {
+    return null
+  }
+
+  const coverMap = await fetchAlbumCoverMap([row])
+  return formatAlbum(row, coverMap)
+}
+
+export async function setAlbumCoverImage(input: {
+  albumId: string
+  imageId: string
+}) {
+  const [image] = await db
+    .select({ id: images.id })
+    .from(images)
+    .where(
+      and(
+        eq(images.id, input.imageId),
+        eq(images.albumId, input.albumId),
+        isNull(images.deletedAt),
+      ),
+    )
+    .limit(1)
+
+  if (!image) {
+    return null
+  }
+
+  const [album] = await db
+    .update(albums)
+    .set({ coverImageId: input.imageId, updatedAt: now() })
+    .where(eq(albums.id, input.albumId))
+    .returning({ id: albums.id })
+
+  return album ? getAlbum(input.albumId) : null
 }
 
 export async function listTags(
@@ -639,7 +706,14 @@ export async function updateImage(input: {
     updatedAt: now(),
   }
 
+  let previousAlbumId: null | string | undefined
   if (input.albumId !== undefined) {
+    const [image] = await db
+      .select({ albumId: images.albumId })
+      .from(images)
+      .where(eq(images.id, input.id))
+      .limit(1)
+    previousAlbumId = image?.albumId ?? null
     values.albumId = input.albumId
   }
   if (input.dominantColors !== undefined) {
@@ -675,6 +749,47 @@ export async function updateImage(input: {
 
   if (!updated) {
     return null
+  }
+
+  if (
+    previousAlbumId !== undefined &&
+    previousAlbumId &&
+    previousAlbumId !== input.albumId
+  ) {
+    await db
+      .update(albums)
+      .set({ coverImageId: null, updatedAt: now() })
+      .where(
+        and(
+          eq(albums.id, previousAlbumId),
+          eq(albums.coverImageId, input.id),
+        ),
+      )
+  }
+
+  if (input.albumId && previousAlbumId !== input.albumId) {
+    const [album] = await db
+      .select({ coverImageId: albums.coverImageId })
+      .from(albums)
+      .where(eq(albums.id, input.albumId))
+      .limit(1)
+    const [existingImages] = await db
+      .select({ value: count() })
+      .from(images)
+      .where(
+        and(
+          eq(images.albumId, input.albumId),
+          isNull(images.deletedAt),
+          ne(images.id, input.id),
+        ),
+      )
+
+    if (Boolean(album) && !album?.coverImageId && (existingImages?.value ?? 0) === 0) {
+      await db
+        .update(albums)
+        .set({ coverImageId: input.id, updatedAt: now() })
+        .where(eq(albums.id, input.albumId))
+    }
   }
 
   if (input.tagIds !== undefined) {
@@ -721,10 +836,70 @@ export async function batchAssignAlbum(input: {
     return { imageCount: 0 }
   }
 
+  const assignedRows = await db
+    .select({ albumId: images.albumId, id: images.id })
+    .from(images)
+    .where(inArray(images.id, imageIds))
+  const previousAlbumIds = uniqueValues(
+    assignedRows.flatMap((row) =>
+      row.albumId && row.albumId !== input.albumId ? [row.albumId] : [],
+    ),
+  )
+
+  let shouldSetInitialCover = false
+  if (input.albumId) {
+    const [album] = await db
+      .select({ coverImageId: albums.coverImageId })
+      .from(albums)
+      .where(eq(albums.id, input.albumId))
+      .limit(1)
+    const [existingImages] = await db
+      .select({ value: count() })
+      .from(images)
+      .where(and(eq(images.albumId, input.albumId), isNull(images.deletedAt)))
+
+    shouldSetInitialCover =
+      Boolean(album) && !album?.coverImageId && (existingImages?.value ?? 0) === 0
+  }
+
   await db
     .update(images)
     .set({ albumId: input.albumId, updatedAt: now() })
     .where(inArray(images.id, imageIds))
+
+  if (previousAlbumIds.length > 0) {
+    await db
+      .update(albums)
+      .set({ coverImageId: null, updatedAt: now() })
+      .where(
+        and(
+          inArray(albums.id, previousAlbumIds),
+          inArray(albums.coverImageId, imageIds),
+        ),
+      )
+  }
+
+  if (input.albumId && shouldSetInitialCover) {
+    const candidateRows = await db
+      .select({ id: images.id })
+      .from(images)
+      .where(
+        and(
+          inArray(images.id, imageIds),
+          eq(images.albumId, input.albumId),
+          isNull(images.deletedAt),
+        ),
+      )
+    const candidateIds = new Set(candidateRows.map((row) => row.id))
+    const coverImageId = imageIds.find((imageId) => candidateIds.has(imageId))
+
+    if (coverImageId) {
+      await db
+        .update(albums)
+        .set({ coverImageId, updatedAt: now() })
+        .where(eq(albums.id, input.albumId))
+    }
+  }
 
   return { imageCount: imageIds.length }
 }
@@ -762,28 +937,68 @@ export async function deleteImages(input: { imageIds: string[] }) {
 
   const rows = await db
     .select({
+      deletedAt: images.deletedAt,
+      id: images.id,
       originalKey: images.originalKey,
       thumbnailKey: images.thumbnailKey,
     })
     .from(images)
     .where(inArray(images.id, imageIds))
 
-  await deleteImageObjects(
-    rows.flatMap((row) =>
-      row.thumbnailKey
-        ? [row.originalKey, row.thumbnailKey]
-        : [row.originalKey],
-    ),
-  )
+  const softDeleteIds = rows
+    .filter((row) => !row.deletedAt)
+    .map((row) => row.id)
+  const hardDeleteRows = rows.filter((row) => row.deletedAt)
 
-  await db.delete(images).where(inArray(images.id, imageIds))
+  if (rows.length > 0) {
+    await db
+      .update(albums)
+      .set({ coverImageId: null, updatedAt: now() })
+      .where(inArray(albums.coverImageId, rows.map((row) => row.id)))
+  }
 
-  return { imageCount: rows.length }
+  if (softDeleteIds.length > 0) {
+    await db
+      .update(images)
+      .set({ deletedAt: now(), updatedAt: now() })
+      .where(inArray(images.id, softDeleteIds))
+  }
+
+  if (hardDeleteRows.length > 0) {
+    await deleteImageObjects(
+      hardDeleteRows.flatMap((row) =>
+        row.thumbnailKey
+          ? [row.originalKey, row.thumbnailKey]
+          : [row.originalKey],
+      ),
+    )
+
+    await db
+      .delete(images)
+      .where(
+        inArray(
+          images.id,
+          hardDeleteRows.map((row) => row.id),
+        ),
+      )
+  }
+
+  return {
+    hardDeletedCount: hardDeleteRows.length,
+    imageCount: rows.length,
+    softDeletedCount: softDeleteIds.length,
+  }
 }
 
 function buildImageConditions(input: ListImagesInput) {
   const conditions = []
   const q = input.q?.trim()
+
+  if (input.filter === 'trash') {
+    conditions.push(isNotNull(images.deletedAt))
+  } else {
+    conditions.push(isNull(images.deletedAt))
+  }
 
   if (q) {
     const term = `%${q}%`
@@ -887,6 +1102,59 @@ async function replaceImageModels(imageId: string, modelIds: string[]) {
       modelId,
     })),
   )
+}
+
+async function fetchAlbumCoverMap(albumRows: Album[]) {
+  const coverImageIds = uniqueValues(
+    albumRows.map((album) => album.coverImageId ?? ''),
+  )
+
+  if (coverImageIds.length === 0) {
+    return new Map<string, AlbumCover>()
+  }
+
+  const coverRows = await db
+    .select({
+      height: images.height,
+      id: images.id,
+      albumId: images.albumId,
+      originalKey: images.originalKey,
+      thumbnailKey: images.thumbnailKey,
+      title: images.title,
+      width: images.width,
+    })
+    .from(images)
+    .where(and(inArray(images.id, coverImageIds), isNull(images.deletedAt)))
+
+  return new Map(
+    coverRows.map((image) => [
+      image.id,
+      {
+        albumId: image.albumId,
+        height: image.height,
+        id: image.id,
+        thumbnailUrl: image.thumbnailKey
+          ? publicAssetPath(image.thumbnailKey)
+          : publicAssetPath(image.originalKey),
+        title: image.title,
+        width: image.width,
+      },
+    ]),
+  )
+}
+
+function formatAlbum(
+  album: Album & { agency?: Agency | null },
+  coverMap: Map<string, AlbumCover>,
+) {
+  const coverImage = album.coverImageId
+    ? (coverMap.get(album.coverImageId) ?? null)
+    : null
+
+  return {
+    ...album,
+    coverImage: coverImage?.albumId === album.id ? coverImage : null,
+  }
 }
 
 async function fetchImageRelationMaps(imageIds: string[]) {
