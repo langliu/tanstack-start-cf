@@ -298,8 +298,8 @@ function TagsPage() {
               </p>
             )}
             <div className='flex gap-3'>
-              <SheetClose asChild>
-                <Button variant='outline'>取消</Button>
+              <SheetClose render={<Button variant='outline' />}>
+                取消
               </SheetClose>
               <Button
                 disabled={

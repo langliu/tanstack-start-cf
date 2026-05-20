@@ -244,45 +244,47 @@ function AlbumMasonryCard({
 }) {
   return (
     <ContextMenu>
-      <ContextMenuTrigger asChild>
-        <article
-          className={cn(
-            'group rounded-md border border-transparent bg-transparent p-0 transition hover:border-ring',
-            isCover && 'border-primary ring-1 ring-primary',
-          )}
-          style={{ width }}
-        >
-          <div className='relative overflow-hidden rounded-md bg-background'>
-            {image.thumbnailUrl ? (
-              <img
-                alt={image.title}
-                className='h-auto w-full object-cover'
-                loading='lazy'
-                src={image.thumbnailUrl}
-              />
-            ) : (
-              <div
-                className={cn(
-                  'grid w-full place-items-center bg-background text-muted-foreground text-xs',
-                  'aspect-[3/4]',
-                )}
-              >
-                无预览
-              </div>
+      <ContextMenuTrigger
+        render={
+          <article
+            className={cn(
+              'group rounded-md border border-transparent bg-transparent p-0 transition hover:border-ring',
+              isCover && 'border-primary ring-1 ring-primary',
             )}
-            {isCover ? (
-              <Badge className='absolute top-2 left-2 gap-1 shadow-sm'>
-                <ImageIcon className='size-3' />
-                封面
-              </Badge>
-            ) : null}
-          </div>
-        </article>
+            style={{ width }}
+          />
+        }
+      >
+        <div className='relative overflow-hidden rounded-md bg-background'>
+          {image.thumbnailUrl ? (
+            <img
+              alt={image.title}
+              className='h-auto w-full object-cover'
+              loading='lazy'
+              src={image.thumbnailUrl}
+            />
+          ) : (
+            <div
+              className={cn(
+                'grid w-full place-items-center bg-background text-muted-foreground text-xs',
+                'aspect-[3/4]',
+              )}
+            >
+              无预览
+            </div>
+          )}
+          {isCover ? (
+            <Badge className='absolute top-2 left-2 gap-1 shadow-sm'>
+              <ImageIcon className='size-3' />
+              封面
+            </Badge>
+          ) : null}
+        </div>
       </ContextMenuTrigger>
       <ContextMenuContent className='admin-shell'>
         <ContextMenuItem
           disabled={isCover || settingCover}
-          onSelect={() => onSetCover(image.id)}
+          onClick={() => onSetCover(image.id)}
         >
           <ImageIcon className='size-4' />
           {isCover
@@ -304,10 +306,12 @@ function useElementSize(element: HTMLElement | null) {
       return
     }
 
+    const target = element
+
     function updateSize() {
       setSize({
-        height: element.clientHeight,
-        width: element.clientWidth,
+        height: target.clientHeight,
+        width: target.clientWidth,
       })
     }
 
@@ -318,7 +322,7 @@ function useElementSize(element: HTMLElement | null) {
     }
 
     const observer = new ResizeObserver(updateSize)
-    observer.observe(element)
+    observer.observe(target)
 
     return () => observer.disconnect()
   }, [element])

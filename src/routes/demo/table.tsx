@@ -33,6 +33,12 @@ export const Route = createFileRoute('/demo/table')({
   component: TableDemo,
 })
 
+const PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50]
+const PAGE_SIZE_ITEMS = PAGE_SIZE_OPTIONS.map((pageSize) => ({
+  label: `Show ${pageSize}`,
+  value: String(pageSize),
+}))
+
 declare module '@tanstack/react-table' {
   interface FilterFns {
     fuzzy: FilterFn<unknown>
@@ -279,6 +285,7 @@ function TableDemo() {
           />
         </span>
         <Select
+          items={PAGE_SIZE_ITEMS}
           onValueChange={(value) => {
             table.setPageSize(Number(value))
           }}
@@ -289,9 +296,9 @@ function TableDemo() {
           </SelectTrigger>
           <SelectContent className='border-gray-700 bg-gray-800 text-white'>
             <SelectGroup>
-              {[10, 20, 30, 40, 50].map((pageSize) => (
-                <SelectItem key={pageSize} value={String(pageSize)}>
-                  Show {pageSize}
+              {PAGE_SIZE_ITEMS.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
                 </SelectItem>
               ))}
             </SelectGroup>

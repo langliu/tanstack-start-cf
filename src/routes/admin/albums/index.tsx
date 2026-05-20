@@ -140,6 +140,14 @@ function AlbumsIndexPage() {
   const items = (data as { items?: AlbumRow[] } | undefined)?.items ?? []
   const agencies =
     (agenciesQuery.data as { items?: AgencyOption[] } | undefined)?.items ?? []
+  const agencyFilterItems = [
+    { label: '全部机构', value: ALL_AGENCIES_VALUE },
+    ...agencies.map((agency) => ({ label: agency.name, value: agency.id })),
+  ]
+  const formAgencyItems = [
+    { label: '无机构', value: NO_AGENCY_VALUE },
+    ...agencies.map((agency) => ({ label: agency.name, value: agency.id })),
+  ]
 
   const saveMutation = editingId ? updateMutation : createMutation
   const drawerTitle = editingId ? '编辑专辑' : '新增专辑'
@@ -196,7 +204,12 @@ function AlbumsIndexPage() {
           />
         </div>
         <Select
+          items={agencyFilterItems}
           onValueChange={(value) => {
+            if (value === null) {
+              return
+            }
+
             setAgencyFilter(value === ALL_AGENCIES_VALUE ? '' : value)
             setPage(0)
           }}
@@ -232,7 +245,7 @@ function AlbumsIndexPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className='w-[120px]'>封面</TableHead>
+                  <TableHead className='w-30'>封面</TableHead>
                   <TableHead>名称</TableHead>
                   <TableHead>机构</TableHead>
                   <TableHead>排序</TableHead>
@@ -360,15 +373,17 @@ function AlbumsIndexPage() {
                   {editingId ? '更新专辑信息和展示排序' : '创建新的图片专辑'}
                 </SheetDescription>
               </div>
-              <SheetClose asChild>
-                <button
-                  className='inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-accent-foreground'
-                  onClick={closeDrawer}
-                  title='关闭'
-                  type='button'
-                >
-                  <X className='size-5' />
-                </button>
+              <SheetClose
+                render={
+                  <button
+                    className='inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-accent-foreground'
+                    onClick={closeDrawer}
+                    title='关闭'
+                    type='button'
+                  />
+                }
+              >
+                <X className='size-5' />
               </SheetClose>
             </div>
           </SheetHeader>
@@ -388,9 +403,14 @@ function AlbumsIndexPage() {
               <div className='space-y-2'>
                 <Label className='text-sm'>机构</Label>
                 <Select
-                  onValueChange={(value) =>
+                  items={formAgencyItems}
+                  onValueChange={(value) => {
+                    if (value === null) {
+                      return
+                    }
+
                     setFormAgencyId(value === NO_AGENCY_VALUE ? '' : value)
-                  }
+                  }}
                   value={formAgencyId || NO_AGENCY_VALUE}
                 >
                   <SelectTrigger className='h-10 w-full bg-background/60'>
@@ -432,14 +452,16 @@ function AlbumsIndexPage() {
               </p>
             )}
             <div className='grid grid-cols-2 gap-3'>
-              <SheetClose asChild>
-                <Button
-                  className='h-10'
-                  onClick={closeDrawer}
-                  variant='outline'
-                >
-                  取消
-                </Button>
+              <SheetClose
+                render={
+                  <Button
+                    className='h-10'
+                    onClick={closeDrawer}
+                    variant='outline'
+                  />
+                }
+              >
+                取消
               </SheetClose>
               <Button
                 className='h-10'

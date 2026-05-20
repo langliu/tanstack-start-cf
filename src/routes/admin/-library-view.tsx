@@ -1,4 +1,5 @@
 import {
+  type InfiniteData,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -134,10 +135,7 @@ type ImageListPage = {
   total: number
 }
 
-type ImageListData = {
-  pageParams: unknown[]
-  pages: ImageListPage[]
-}
+type ImageListData = InfiniteData<ImageListPage, number>
 
 export function AdminImageLibrary({
   activeFilter,
@@ -185,7 +183,13 @@ export function AdminImageLibrary({
     imageSearchQuery,
   ] as const
 
-  const imagesQuery = useInfiniteQuery({
+  const imagesQuery = useInfiniteQuery<
+    ImageListPage,
+    Error,
+    ImageListData,
+    typeof imageListQueryKey,
+    number
+  >({
     getNextPageParam: (lastPage) => {
       const nextOffset = lastPage.offset + lastPage.items.length
       return nextOffset < lastPage.total ? nextOffset : undefined
@@ -584,6 +588,19 @@ function BulkToolbar({
   tagId: string
   tags: Array<{ id: string; name: string }>
 }) {
+  const tagSelectItems = [
+    { label: '标签', value: NO_TAG_VALUE },
+    ...tags.map((tag) => ({ label: tag.name, value: tag.id })),
+  ]
+  const albumSelectItems = [
+    { label: '未专辑', value: NO_ALBUM_VALUE },
+    ...albums.map((album) => ({ label: album.name, value: album.id })),
+  ]
+  const modelSelectItems = [
+    { label: '模特', value: NO_MODEL_VALUE },
+    ...models.map((model) => ({ label: model.name, value: model.id })),
+  ]
+
   return (
     <div className='flex min-h-12 items-center gap-2 overflow-x-auto border-b bg-background px-4 text-sm'>
       <Button onClick={onSelectAll} size='sm' type='button' variant='outline'>
@@ -597,9 +614,14 @@ function BulkToolbar({
       {isTrashFilter ? null : (
         <>
           <Select
-            onValueChange={(value) =>
+            items={tagSelectItems}
+            onValueChange={(value) => {
+              if (value === null) {
+                return
+              }
+
               setTagId(value === NO_TAG_VALUE ? '' : value)
-            }
+            }}
             value={tagId || NO_TAG_VALUE}
           >
             <SelectTrigger className='h-8 min-w-32 bg-background'>
@@ -621,9 +643,14 @@ function BulkToolbar({
           </ActionButton>
 
           <Select
-            onValueChange={(value) =>
+            items={albumSelectItems}
+            onValueChange={(value) => {
+              if (value === null) {
+                return
+              }
+
               setAlbumId(value === NO_ALBUM_VALUE ? '' : value)
-            }
+            }}
             value={albumId || NO_ALBUM_VALUE}
           >
             <SelectTrigger className='h-8 min-w-32 bg-background'>
@@ -645,9 +672,14 @@ function BulkToolbar({
           </ActionButton>
 
           <Select
-            onValueChange={(value) =>
+            items={modelSelectItems}
+            onValueChange={(value) => {
+              if (value === null) {
+                return
+              }
+
               setModelId(value === NO_MODEL_VALUE ? '' : value)
-            }
+            }}
             value={modelId || NO_MODEL_VALUE}
           >
             <SelectTrigger className='h-8 min-w-32 bg-background'>
@@ -951,6 +983,10 @@ function ImageDetailsPanel({
   const [sourceUrl, setSourceUrl] = useState('')
   const [tagIds, setTagIds] = useState<string[]>([])
   const [title, setTitle] = useState('')
+  const albumSelectItems = [
+    { label: '未专辑', value: NO_ALBUM_VALUE },
+    ...albums.map((album) => ({ label: album.name, value: album.id })),
+  ]
 
   useEffect(() => {
     setAlbumId(image?.albumId ?? '')
@@ -1144,7 +1180,12 @@ function ImageDetailsPanel({
         <section className='border-[#333331] border-t pt-4'>
           <p className='mb-2 font-semibold text-[#bfc2bd] text-sm'>专辑</p>
           <Select
+            items={albumSelectItems}
             onValueChange={(value) => {
+              if (value === null) {
+                return
+              }
+
               const nextAlbumId = value === NO_ALBUM_VALUE ? '' : value
               setAlbumId(nextAlbumId)
               savePatch({ albumId: nextAlbumId || null })
@@ -1298,11 +1339,13 @@ function TagPicker({
       )}
 
       <Popover onOpenChange={setOpen} open={open}>
-        <PopoverTrigger asChild>
-          <Button className='w-full' type='button' variant='secondary'>
-            <Plus className='size-4' />
-            添加标签
-          </Button>
+        <PopoverTrigger
+          render={
+            <Button className='w-full' type='button' variant='secondary' />
+          }
+        >
+          <Plus className='size-4' />
+          添加标签
         </PopoverTrigger>
         <PopoverContent align='start' className='w-80 p-0'>
           <div className='border-b p-3'>
@@ -1417,11 +1460,13 @@ function ModelPicker({
       )}
 
       <Popover onOpenChange={setOpen} open={open}>
-        <PopoverTrigger asChild>
-          <Button className='w-full' type='button' variant='secondary'>
-            <Plus className='size-4' />
-            添加模特
-          </Button>
+        <PopoverTrigger
+          render={
+            <Button className='w-full' type='button' variant='secondary' />
+          }
+        >
+          <Plus className='size-4' />
+          添加模特
         </PopoverTrigger>
         <PopoverContent align='start' className='w-80 p-0'>
           <div className='border-b p-3'>
@@ -1538,10 +1583,12 @@ function useElementSize(element: HTMLElement | null) {
       return
     }
 
+    const target = element
+
     function updateSize() {
       setSize({
-        height: element.clientHeight,
-        width: element.clientWidth,
+        height: target.clientHeight,
+        width: target.clientWidth,
       })
     }
 
@@ -1552,7 +1599,7 @@ function useElementSize(element: HTMLElement | null) {
     }
 
     const observer = new ResizeObserver(updateSize)
-    observer.observe(element)
+    observer.observe(target)
 
     return () => observer.disconnect()
   }, [element])

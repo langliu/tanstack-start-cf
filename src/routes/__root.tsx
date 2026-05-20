@@ -3,6 +3,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import {
   createRootRouteWithContext,
   HeadContent,
+  ScriptOnce,
   Scripts,
   useRouterState,
 } from '@tanstack/react-router'
@@ -52,7 +53,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang='zh-CN' suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <ScriptOnce>{THEME_INIT_SCRIPT}</ScriptOnce>
         <HeadContent />
       </head>
       <body className='font-sans antialiased wrap-anywhere selection:bg-[rgba(79,184,178,0.24)]'>

@@ -108,8 +108,13 @@ export function Select({
   return (
     <div>
       <ShadcnSelect.Select
+        items={values}
         name={field.name}
-        onValueChange={(value) => field.handleChange(value)}
+        onValueChange={(value) => {
+          if (value !== null) {
+            field.handleChange(value)
+          }
+        }}
         value={field.state.value}
       >
         <ShadcnSelect.SelectTrigger className='w-full'>
@@ -147,8 +152,10 @@ export function Slider({ label }: { label: string }) {
       <ShadcnSlider
         id={label}
         onBlur={field.handleBlur}
-        onValueChange={(value) => field.handleChange(value[0])}
-        value={[field.state.value]}
+        onValueChange={(value) =>
+          field.handleChange(Array.isArray(value) ? value[0] : value)
+        }
+        value={field.state.value}
       />
       {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
     </div>
