@@ -32,9 +32,9 @@ import {
   makeSlug,
   now,
   nullableText,
-  publicAssetPath,
   uniqueValues,
 } from './utils'
+import { createOssSignedAssetUrl } from './oss'
 
 type Agency = typeof agencies.$inferSelect
 type Album = typeof albums.$inferSelect
@@ -476,7 +476,12 @@ export async function listModels(
     .from(models)
     .where(where)
 
-  return { items, limit, offset, total: totalResult?.value ?? 0 }
+  return {
+    items: await Promise.all(items.map(formatModel)),
+    limit,
+    offset,
+    total: totalResult?.value ?? 0,
+  }
 }
 
 export async function createModel(input: {
@@ -506,7 +511,7 @@ export async function createModel(input: {
     })
     .returning()
 
-  return model
+  return formatModel(model)
 }
 
 export async function updateModel(input: {
@@ -555,7 +560,16 @@ export async function updateModel(input: {
     .where(eq(models.id, input.id))
     .returning()
 
-  return model ?? null
+  return model ? formatModel(model) : null
+}
+
+async function formatModel(model: Model) {
+  return {
+    ...model,
+    avatarUrl: model.avatarObjectKey
+      ? await signedAssetUrl(model.avatarObjectKey)
+      : null,
+  }
 }
 
 export async function deleteModel(id: string) {
@@ -593,7 +607,7 @@ export async function listImages(input: ListImagesInput = {}) {
   )
 
   return {
-    items: rows.map((row) => formatImage(row, relationMaps)),
+    items: await Promise.all(rows.map((row) => formatImage(row, relationMaps))),
     limit,
     offset,
     total: total?.value ?? 0,
@@ -1133,21 +1147,23 @@ async function fetchAlbumCoverMap(albumRows: Album[]) {
     .from(images)
     .where(and(inArray(images.id, coverImageIds), isNull(images.deletedAt)))
 
-  return new Map(
-    coverRows.map((image) => [
+  const entries = await Promise.all(
+    coverRows.map(async (image) => [
       image.id,
       {
         albumId: image.albumId,
         height: image.height,
         id: image.id,
         thumbnailUrl: image.thumbnailKey
-          ? publicAssetPath(image.thumbnailKey)
-          : publicAssetPath(image.originalKey),
+          ? await signedAssetUrl(image.thumbnailKey)
+          : await signedAssetUrl(image.originalKey),
         title: image.title,
         width: image.width,
       },
-    ]),
+    ] as const),
   )
+
+  return new Map(entries)
 }
 
 function formatAlbum(
@@ -1202,14 +1218,14 @@ async function fetchImageRelationMaps(imageIds: string[]) {
 
   for (const row of modelRows) {
     const existing = modelsByImageId.get(row.imageId) ?? []
-    existing.push(row.model)
+    existing.push(await formatModel(row.model))
     modelsByImageId.set(row.imageId, existing)
   }
 
   return { modelsByImageId, tagsByImageId }
 }
 
-function formatImage(
+async function formatImage(
   row: JoinedImageRow,
   relationMaps: Awaited<ReturnType<typeof fetchImageRelationMaps>>,
 ) {
@@ -1218,10 +1234,14 @@ function formatImage(
     agency: row.agency,
     album: row.album,
     models: relationMaps.modelsByImageId.get(row.image.id) ?? [],
-    originalUrl: publicAssetPath(row.image.originalKey),
+    originalUrl: await signedAssetUrl(row.image.originalKey),
     tags: relationMaps.tagsByImageId.get(row.image.id) ?? [],
     thumbnailUrl: row.image.thumbnailKey
-      ? publicAssetPath(row.image.thumbnailKey)
-      : publicAssetPath(row.image.originalKey),
+      ? await signedAssetUrl(row.image.thumbnailKey)
+      : await signedAssetUrl(row.image.originalKey),
   }
+}
+
+async function signedAssetUrl(key: string) {
+  return createOssSignedAssetUrl({ key })
 }

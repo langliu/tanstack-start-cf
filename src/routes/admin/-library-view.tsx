@@ -66,6 +66,28 @@ type UploadResult = {
   width?: number
 }
 
+type DirectUploadTarget = {
+  contentType: string
+  headers: Record<string, string>
+  key: string
+  publicPath: string
+  size: number
+  uploadUrl: string
+}
+
+type PrepareImageUploadResponse =
+  | {
+      duplicate: false
+      imageId: string
+      upload: {
+        original: DirectUploadTarget
+        thumbnail: DirectUploadTarget | null
+      }
+    }
+  | {
+      duplicate: true
+    }
+
 type ImageGridItem = {
   album: { name: string } | null
   fileSize: number
@@ -80,6 +102,7 @@ type ImageGridItem = {
 
 type NamedOption = {
   avatarObjectKey?: null | string
+  avatarUrl?: null | string
   id: string
   name: string
 }
@@ -336,39 +359,72 @@ export function AdminImageLibrary({
           continue
         }
 
-        const prepared = await prepareUpload(file)
-        const formData = new FormData()
-        formData.append('original', file)
-        if (prepared.thumbnail) {
-          formData.append('thumbnail', prepared.thumbnail)
-        }
-        formData.append(
-          'metadata',
-          JSON.stringify({
-            dominantColors: prepared.dominantColors,
-            height: prepared.height,
-            title: filenameStem(file.name),
-            width: prepared.width,
-          }),
-        )
-
-        const response = await fetch('/api/admin/images/upload', {
-          body: formData,
-          method: 'POST',
+        const preparedImage = await prepareUpload(file)
+        const preparedUpload = await prepareDirectImageUpload({
+          checksumSha256,
+          original: file,
+          thumbnail: preparedImage.thumbnail ?? null,
         })
 
-        if (!response.ok) {
-          const payload = (await response.json().catch(() => null)) as {
-            error?: string
-          } | null
-          throw new Error(payload?.error ?? '上传失败')
+        if (preparedUpload.duplicate) {
+          skippedDuplicates += 1
+          uploadedChecksums.add(checksumSha256)
+          continue
         }
 
-        const payload = (await response.json().catch(() => null)) as {
-          duplicate?: boolean
-        } | null
-        if (payload?.duplicate) {
-          skippedDuplicates += 1
+        const uploadedKeys: string[] = []
+        try {
+          await uploadToObjectStorage(preparedUpload.upload.original, file)
+          uploadedKeys.push(preparedUpload.upload.original.key)
+
+          if (preparedImage.thumbnail && preparedUpload.upload.thumbnail) {
+            await uploadToObjectStorage(
+              preparedUpload.upload.thumbnail,
+              preparedImage.thumbnail,
+            )
+            uploadedKeys.push(preparedUpload.upload.thumbnail.key)
+          }
+
+          const response = await fetch('/api/admin/images/upload/complete', {
+            body: JSON.stringify({
+              checksumSha256,
+              imageId: preparedUpload.imageId,
+              metadata: {
+                dominantColors: preparedImage.dominantColors,
+                height: preparedImage.height,
+                title: filenameStem(file.name),
+                width: preparedImage.width,
+              },
+              original: objectDescriptor(preparedUpload.upload.original),
+              originalFilename: file.name,
+              thumbnail: preparedUpload.upload.thumbnail
+                ? objectDescriptor(preparedUpload.upload.thumbnail)
+                : null,
+            }),
+            headers: {
+              'content-type': 'application/json',
+            },
+            method: 'POST',
+          })
+
+          if (!response.ok) {
+            const payload = (await response.json().catch(() => null)) as {
+              error?: string
+            } | null
+            throw new Error(payload?.error ?? '上传失败')
+          }
+
+          const payload = (await response.json().catch(() => null)) as {
+            duplicate?: boolean
+          } | null
+          if (payload?.duplicate) {
+            skippedDuplicates += 1
+          }
+        } catch (error) {
+          if (uploadedKeys.length > 0) {
+            await cancelDirectImageUpload(uploadedKeys)
+          }
+          throw error
         }
         uploadedChecksums.add(checksumSha256)
       }
@@ -1540,11 +1596,11 @@ function ModelAvatar({
         className,
       )}
     >
-      {model.avatarObjectKey ? (
+      {model.avatarUrl ? (
         <img
           alt={model.name}
           className='size-full object-cover'
-          src={publicAssetUrl(model.avatarObjectKey)}
+          src={model.avatarUrl}
         />
       ) : (
         <UserRound className='size-4 text-muted-foreground' />
@@ -1688,6 +1744,74 @@ async function prepareUpload(file: File): Promise<UploadResult> {
   }
 }
 
+async function prepareDirectImageUpload(input: {
+  checksumSha256: string
+  original: File
+  thumbnail: File | null
+}) {
+  const response = await fetch('/api/admin/images/upload/prepare', {
+    body: JSON.stringify({
+      checksumSha256: input.checksumSha256,
+      original: fileDescriptor(input.original),
+      thumbnail: input.thumbnail ? fileDescriptor(input.thumbnail) : null,
+    }),
+    headers: {
+      'content-type': 'application/json',
+    },
+    method: 'POST',
+  })
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as {
+      error?: string
+    } | null
+    throw new Error(payload?.error ?? '上传准备失败')
+  }
+
+  return (await response.json()) as PrepareImageUploadResponse
+}
+
+async function uploadToObjectStorage(target: DirectUploadTarget, file: File) {
+  const response = await fetch(target.uploadUrl, {
+    body: file,
+    headers: target.headers,
+    method: 'PUT',
+  })
+
+  if (!response.ok) {
+    const message = await response.text().catch(() => '')
+    throw new Error(message || `上传到 OSS 失败：${response.status}`)
+  }
+}
+
+async function cancelDirectImageUpload(keys: string[]) {
+  await fetch('/api/admin/images/upload/cancel', {
+    body: JSON.stringify({ keys }),
+    headers: {
+      'content-type': 'application/json',
+    },
+    method: 'POST',
+  }).catch(() => {
+    // Best-effort cleanup only; keep the upload error visible.
+  })
+}
+
+function fileDescriptor(file: File) {
+  return {
+    contentType: file.type,
+    name: file.name,
+    size: file.size,
+  }
+}
+
+function objectDescriptor(target: DirectUploadTarget) {
+  return {
+    contentType: target.contentType,
+    key: target.key,
+    size: target.size,
+  }
+}
+
 function extractDominantColors(bitmap: ImageBitmap) {
   try {
     const maxSide = 64
@@ -1817,8 +1941,4 @@ function formatDate(value: Date | number | string) {
     month: '2-digit',
     year: 'numeric',
   }).format(date)
-}
-
-function publicAssetUrl(objectKey: string) {
-  return `/api/assets/${objectKey.split('/').map(encodeURIComponent).join('/')}`
 }

@@ -46,6 +46,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 function RootDocument({ children }: { children: React.ReactNode }) {
   const isAdminRoute = useRouterState({
     select: (state) =>
+      state.location.pathname === '/login' ||
       state.location.pathname === '/admin' ||
       state.location.pathname.startsWith('/admin/'),
   })

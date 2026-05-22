@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -34,7 +35,17 @@ import { Route as AdminAlbumsAlbumIdRouteImport } from './routes/admin/albums/$a
 import { Route as ApiAdminImagesUploadRouteImport } from './routes/api/admin/images/upload'
 import { Route as ApiAdminModelsAvatarUploadRouteImport } from './routes/api/admin/models/avatar/upload'
 import { Route as ApiAdminModelsAvatarDeleteRouteImport } from './routes/api/admin/models/avatar/delete'
+import { Route as ApiAdminImagesUploadPrepareRouteImport } from './routes/api/admin/images/upload/prepare'
+import { Route as ApiAdminImagesUploadCompleteRouteImport } from './routes/api/admin/images/upload/complete'
+import { Route as ApiAdminImagesUploadCancelRouteImport } from './routes/api/admin/images/upload/cancel'
+import { Route as ApiAdminModelsAvatarUploadPrepareRouteImport } from './routes/api/admin/models/avatar/upload/prepare'
+import { Route as ApiAdminModelsAvatarUploadCompleteRouteImport } from './routes/api/admin/models/avatar/upload/complete'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -162,11 +173,42 @@ const ApiAdminModelsAvatarDeleteRoute =
     path: '/api/admin/models/avatar/delete',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiAdminImagesUploadPrepareRoute =
+  ApiAdminImagesUploadPrepareRouteImport.update({
+    id: '/prepare',
+    path: '/prepare',
+    getParentRoute: () => ApiAdminImagesUploadRoute,
+  } as any)
+const ApiAdminImagesUploadCompleteRoute =
+  ApiAdminImagesUploadCompleteRouteImport.update({
+    id: '/complete',
+    path: '/complete',
+    getParentRoute: () => ApiAdminImagesUploadRoute,
+  } as any)
+const ApiAdminImagesUploadCancelRoute =
+  ApiAdminImagesUploadCancelRouteImport.update({
+    id: '/cancel',
+    path: '/cancel',
+    getParentRoute: () => ApiAdminImagesUploadRoute,
+  } as any)
+const ApiAdminModelsAvatarUploadPrepareRoute =
+  ApiAdminModelsAvatarUploadPrepareRouteImport.update({
+    id: '/prepare',
+    path: '/prepare',
+    getParentRoute: () => ApiAdminModelsAvatarUploadRoute,
+  } as any)
+const ApiAdminModelsAvatarUploadCompleteRoute =
+  ApiAdminModelsAvatarUploadCompleteRouteImport.update({
+    id: '/complete',
+    path: '/complete',
+    getParentRoute: () => ApiAdminModelsAvatarUploadRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/login': typeof LoginRoute
   '/admin/albums': typeof AdminAlbumsRouteRouteWithChildren
   '/admin/agencies': typeof AdminAgenciesRoute
   '/admin/models': typeof AdminModelsRoute
@@ -186,13 +228,19 @@ export interface FileRoutesByFullPath {
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/admin/albums/': typeof AdminAlbumsIndexRoute
-  '/api/admin/images/upload': typeof ApiAdminImagesUploadRoute
+  '/api/admin/images/upload': typeof ApiAdminImagesUploadRouteWithChildren
+  '/api/admin/images/upload/cancel': typeof ApiAdminImagesUploadCancelRoute
+  '/api/admin/images/upload/complete': typeof ApiAdminImagesUploadCompleteRoute
+  '/api/admin/images/upload/prepare': typeof ApiAdminImagesUploadPrepareRoute
   '/api/admin/models/avatar/delete': typeof ApiAdminModelsAvatarDeleteRoute
-  '/api/admin/models/avatar/upload': typeof ApiAdminModelsAvatarUploadRoute
+  '/api/admin/models/avatar/upload': typeof ApiAdminModelsAvatarUploadRouteWithChildren
+  '/api/admin/models/avatar/upload/complete': typeof ApiAdminModelsAvatarUploadCompleteRoute
+  '/api/admin/models/avatar/upload/prepare': typeof ApiAdminModelsAvatarUploadPrepareRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/login': typeof LoginRoute
   '/admin/agencies': typeof AdminAgenciesRoute
   '/admin/models': typeof AdminModelsRoute
   '/admin/tags': typeof AdminTagsRoute
@@ -211,15 +259,21 @@ export interface FileRoutesByTo {
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/admin/albums': typeof AdminAlbumsIndexRoute
-  '/api/admin/images/upload': typeof ApiAdminImagesUploadRoute
+  '/api/admin/images/upload': typeof ApiAdminImagesUploadRouteWithChildren
+  '/api/admin/images/upload/cancel': typeof ApiAdminImagesUploadCancelRoute
+  '/api/admin/images/upload/complete': typeof ApiAdminImagesUploadCompleteRoute
+  '/api/admin/images/upload/prepare': typeof ApiAdminImagesUploadPrepareRoute
   '/api/admin/models/avatar/delete': typeof ApiAdminModelsAvatarDeleteRoute
-  '/api/admin/models/avatar/upload': typeof ApiAdminModelsAvatarUploadRoute
+  '/api/admin/models/avatar/upload': typeof ApiAdminModelsAvatarUploadRouteWithChildren
+  '/api/admin/models/avatar/upload/complete': typeof ApiAdminModelsAvatarUploadCompleteRoute
+  '/api/admin/models/avatar/upload/prepare': typeof ApiAdminModelsAvatarUploadPrepareRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/login': typeof LoginRoute
   '/admin/albums': typeof AdminAlbumsRouteRouteWithChildren
   '/admin/agencies': typeof AdminAgenciesRoute
   '/admin/models': typeof AdminModelsRoute
@@ -239,9 +293,14 @@ export interface FileRoutesById {
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/admin/albums/': typeof AdminAlbumsIndexRoute
-  '/api/admin/images/upload': typeof ApiAdminImagesUploadRoute
+  '/api/admin/images/upload': typeof ApiAdminImagesUploadRouteWithChildren
+  '/api/admin/images/upload/cancel': typeof ApiAdminImagesUploadCancelRoute
+  '/api/admin/images/upload/complete': typeof ApiAdminImagesUploadCompleteRoute
+  '/api/admin/images/upload/prepare': typeof ApiAdminImagesUploadPrepareRoute
   '/api/admin/models/avatar/delete': typeof ApiAdminModelsAvatarDeleteRoute
-  '/api/admin/models/avatar/upload': typeof ApiAdminModelsAvatarUploadRoute
+  '/api/admin/models/avatar/upload': typeof ApiAdminModelsAvatarUploadRouteWithChildren
+  '/api/admin/models/avatar/upload/complete': typeof ApiAdminModelsAvatarUploadCompleteRoute
+  '/api/admin/models/avatar/upload/prepare': typeof ApiAdminModelsAvatarUploadPrepareRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -249,6 +308,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/about'
+    | '/login'
     | '/admin/albums'
     | '/admin/agencies'
     | '/admin/models'
@@ -269,12 +329,18 @@ export interface FileRouteTypes {
     | '/demo/form/simple'
     | '/admin/albums/'
     | '/api/admin/images/upload'
+    | '/api/admin/images/upload/cancel'
+    | '/api/admin/images/upload/complete'
+    | '/api/admin/images/upload/prepare'
     | '/api/admin/models/avatar/delete'
     | '/api/admin/models/avatar/upload'
+    | '/api/admin/models/avatar/upload/complete'
+    | '/api/admin/models/avatar/upload/prepare'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
+    | '/login'
     | '/admin/agencies'
     | '/admin/models'
     | '/admin/tags'
@@ -294,13 +360,19 @@ export interface FileRouteTypes {
     | '/demo/form/simple'
     | '/admin/albums'
     | '/api/admin/images/upload'
+    | '/api/admin/images/upload/cancel'
+    | '/api/admin/images/upload/complete'
+    | '/api/admin/images/upload/prepare'
     | '/api/admin/models/avatar/delete'
     | '/api/admin/models/avatar/upload'
+    | '/api/admin/models/avatar/upload/complete'
+    | '/api/admin/models/avatar/upload/prepare'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/about'
+    | '/login'
     | '/admin/albums'
     | '/admin/agencies'
     | '/admin/models'
@@ -321,14 +393,20 @@ export interface FileRouteTypes {
     | '/demo/form/simple'
     | '/admin/albums/'
     | '/api/admin/images/upload'
+    | '/api/admin/images/upload/cancel'
+    | '/api/admin/images/upload/complete'
+    | '/api/admin/images/upload/prepare'
     | '/api/admin/models/avatar/delete'
     | '/api/admin/models/avatar/upload'
+    | '/api/admin/models/avatar/upload/complete'
+    | '/api/admin/models/avatar/upload/prepare'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
+  LoginRoute: typeof LoginRoute
   ApiSplatRoute: typeof ApiSplatRoute
   DemoBetterAuthRoute: typeof DemoBetterAuthRoute
   DemoDrizzleRoute: typeof DemoDrizzleRoute
@@ -340,13 +418,20 @@ export interface RootRouteChildren {
   ApiRpcSplatRoute: typeof ApiRpcSplatRoute
   DemoFormAddressRoute: typeof DemoFormAddressRoute
   DemoFormSimpleRoute: typeof DemoFormSimpleRoute
-  ApiAdminImagesUploadRoute: typeof ApiAdminImagesUploadRoute
+  ApiAdminImagesUploadRoute: typeof ApiAdminImagesUploadRouteWithChildren
   ApiAdminModelsAvatarDeleteRoute: typeof ApiAdminModelsAvatarDeleteRoute
-  ApiAdminModelsAvatarUploadRoute: typeof ApiAdminModelsAvatarUploadRoute
+  ApiAdminModelsAvatarUploadRoute: typeof ApiAdminModelsAvatarUploadRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/about': {
       id: '/about'
       path: '/about'
@@ -522,6 +607,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminModelsAvatarDeleteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/images/upload/prepare': {
+      id: '/api/admin/images/upload/prepare'
+      path: '/prepare'
+      fullPath: '/api/admin/images/upload/prepare'
+      preLoaderRoute: typeof ApiAdminImagesUploadPrepareRouteImport
+      parentRoute: typeof ApiAdminImagesUploadRoute
+    }
+    '/api/admin/images/upload/complete': {
+      id: '/api/admin/images/upload/complete'
+      path: '/complete'
+      fullPath: '/api/admin/images/upload/complete'
+      preLoaderRoute: typeof ApiAdminImagesUploadCompleteRouteImport
+      parentRoute: typeof ApiAdminImagesUploadRoute
+    }
+    '/api/admin/images/upload/cancel': {
+      id: '/api/admin/images/upload/cancel'
+      path: '/cancel'
+      fullPath: '/api/admin/images/upload/cancel'
+      preLoaderRoute: typeof ApiAdminImagesUploadCancelRouteImport
+      parentRoute: typeof ApiAdminImagesUploadRoute
+    }
+    '/api/admin/models/avatar/upload/prepare': {
+      id: '/api/admin/models/avatar/upload/prepare'
+      path: '/prepare'
+      fullPath: '/api/admin/models/avatar/upload/prepare'
+      preLoaderRoute: typeof ApiAdminModelsAvatarUploadPrepareRouteImport
+      parentRoute: typeof ApiAdminModelsAvatarUploadRoute
+    }
+    '/api/admin/models/avatar/upload/complete': {
+      id: '/api/admin/models/avatar/upload/complete'
+      path: '/complete'
+      fullPath: '/api/admin/models/avatar/upload/complete'
+      preLoaderRoute: typeof ApiAdminModelsAvatarUploadCompleteRouteImport
+      parentRoute: typeof ApiAdminModelsAvatarUploadRoute
+    }
   }
 }
 
@@ -560,10 +680,44 @@ const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
   AdminRouteRouteChildren,
 )
 
+interface ApiAdminImagesUploadRouteChildren {
+  ApiAdminImagesUploadCancelRoute: typeof ApiAdminImagesUploadCancelRoute
+  ApiAdminImagesUploadCompleteRoute: typeof ApiAdminImagesUploadCompleteRoute
+  ApiAdminImagesUploadPrepareRoute: typeof ApiAdminImagesUploadPrepareRoute
+}
+
+const ApiAdminImagesUploadRouteChildren: ApiAdminImagesUploadRouteChildren = {
+  ApiAdminImagesUploadCancelRoute: ApiAdminImagesUploadCancelRoute,
+  ApiAdminImagesUploadCompleteRoute: ApiAdminImagesUploadCompleteRoute,
+  ApiAdminImagesUploadPrepareRoute: ApiAdminImagesUploadPrepareRoute,
+}
+
+const ApiAdminImagesUploadRouteWithChildren =
+  ApiAdminImagesUploadRoute._addFileChildren(ApiAdminImagesUploadRouteChildren)
+
+interface ApiAdminModelsAvatarUploadRouteChildren {
+  ApiAdminModelsAvatarUploadCompleteRoute: typeof ApiAdminModelsAvatarUploadCompleteRoute
+  ApiAdminModelsAvatarUploadPrepareRoute: typeof ApiAdminModelsAvatarUploadPrepareRoute
+}
+
+const ApiAdminModelsAvatarUploadRouteChildren: ApiAdminModelsAvatarUploadRouteChildren =
+  {
+    ApiAdminModelsAvatarUploadCompleteRoute:
+      ApiAdminModelsAvatarUploadCompleteRoute,
+    ApiAdminModelsAvatarUploadPrepareRoute:
+      ApiAdminModelsAvatarUploadPrepareRoute,
+  }
+
+const ApiAdminModelsAvatarUploadRouteWithChildren =
+  ApiAdminModelsAvatarUploadRoute._addFileChildren(
+    ApiAdminModelsAvatarUploadRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRouteRoute: AdminRouteRouteWithChildren,
   AboutRoute: AboutRoute,
+  LoginRoute: LoginRoute,
   ApiSplatRoute: ApiSplatRoute,
   DemoBetterAuthRoute: DemoBetterAuthRoute,
   DemoDrizzleRoute: DemoDrizzleRoute,
@@ -575,9 +729,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiRpcSplatRoute: ApiRpcSplatRoute,
   DemoFormAddressRoute: DemoFormAddressRoute,
   DemoFormSimpleRoute: DemoFormSimpleRoute,
-  ApiAdminImagesUploadRoute: ApiAdminImagesUploadRoute,
+  ApiAdminImagesUploadRoute: ApiAdminImagesUploadRouteWithChildren,
   ApiAdminModelsAvatarDeleteRoute: ApiAdminModelsAvatarDeleteRoute,
-  ApiAdminModelsAvatarUploadRoute: ApiAdminModelsAvatarUploadRoute,
+  ApiAdminModelsAvatarUploadRoute: ApiAdminModelsAvatarUploadRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -39,6 +39,7 @@ const PAGE_SIZE = 20
 type ModelRow = {
   alias?: string | null
   avatarObjectKey?: string | null
+  avatarUrl?: string | null
   bio?: string | null
   id: string
   instagramUrl?: string | null
@@ -52,6 +53,15 @@ type AvatarUploadResult = {
     objectKey: string
     publicUrl: string
   }
+}
+
+type DirectUploadTarget = {
+  contentType: string
+  headers: Record<string, string>
+  key: string
+  publicPath: string
+  size: number
+  uploadUrl: string
 }
 
 export const Route = createFileRoute('/admin/models')({
@@ -173,9 +183,7 @@ function ModelsPage() {
     setFormAlias(model.alias ?? '')
     setFormAvatarFile(null)
     setFormAvatarObjectKey(model.avatarObjectKey ?? '')
-    setFormAvatarPreviewUrl(
-      model.avatarObjectKey ? publicAssetUrl(model.avatarObjectKey) : '',
-    )
+    setFormAvatarPreviewUrl(model.avatarUrl ?? '')
     setFormBio(model.bio ?? '')
     setFormInstagramUrl(model.instagramUrl ?? '')
     setFormWeiboUrl(model.weiboUrl ?? '')
@@ -213,27 +221,41 @@ function ModelsPage() {
       return formAvatarObjectKey || null
     }
 
-    const formData = new FormData()
-    formData.append('avatar', formAvatarFile)
-    formData.append(
-      'metadata',
-      JSON.stringify(editingId ? { modelId: editingId } : {}),
-    )
-
-    const response = await fetch('/api/admin/models/avatar/upload', {
-      body: formData,
-      method: 'POST',
+    const upload = await prepareDirectAvatarUpload({
+      avatar: formAvatarFile,
+      modelId: editingId,
     })
+    let uploaded = false
 
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as {
-        error?: string
-      } | null
-      throw new Error(payload?.error ?? '头像上传失败')
+    try {
+      await uploadToObjectStorage(upload, formAvatarFile)
+      uploaded = true
+
+      const response = await fetch('/api/admin/models/avatar/upload/complete', {
+        body: JSON.stringify({
+          avatar: objectDescriptor(upload),
+        }),
+        headers: {
+          'content-type': 'application/json',
+        },
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string
+        } | null
+        throw new Error(payload?.error ?? '头像上传失败')
+      }
+
+      const payload = (await response.json()) as AvatarUploadResult
+      return payload.avatar.objectKey
+    } catch (error) {
+      if (uploaded) {
+        await deleteUploadedAvatar(upload.key)
+      }
+      throw error
     }
-
-    const payload = (await response.json()) as AvatarUploadResult
-    return payload.avatar.objectKey
   }
 
   return (
@@ -291,11 +313,11 @@ function ModelsPage() {
                     <TableRow key={model.id}>
                       <TableCell>
                         <div className='grid size-10 place-items-center overflow-hidden rounded-md border bg-background'>
-                          {model.avatarObjectKey ? (
+                          {model.avatarUrl ? (
                             <img
                               alt={model.name}
                               className='size-full object-cover'
-                              src={publicAssetUrl(model.avatarObjectKey)}
+                              src={model.avatarUrl}
                             />
                           ) : (
                             <UserRound className='size-4 text-muted-foreground' />
@@ -547,6 +569,61 @@ async function prepareModelAvatar(file: File) {
   })
 }
 
+async function prepareDirectAvatarUpload(input: {
+  avatar: File
+  modelId: null | string
+}) {
+  const response = await fetch('/api/admin/models/avatar/upload/prepare', {
+    body: JSON.stringify({
+      avatar: fileDescriptor(input.avatar),
+      modelId: input.modelId,
+    }),
+    headers: {
+      'content-type': 'application/json',
+    },
+    method: 'POST',
+  })
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as {
+      error?: string
+    } | null
+    throw new Error(payload?.error ?? '头像上传准备失败')
+  }
+
+  const payload = (await response.json()) as { upload: DirectUploadTarget }
+  return payload.upload
+}
+
+async function uploadToObjectStorage(target: DirectUploadTarget, file: File) {
+  const response = await fetch(target.uploadUrl, {
+    body: file,
+    headers: target.headers,
+    method: 'PUT',
+  })
+
+  if (!response.ok) {
+    const message = await response.text().catch(() => '')
+    throw new Error(message || `上传到 OSS 失败：${response.status}`)
+  }
+}
+
+function fileDescriptor(file: File) {
+  return {
+    contentType: file.type,
+    name: file.name,
+    size: file.size,
+  }
+}
+
+function objectDescriptor(target: DirectUploadTarget) {
+  return {
+    contentType: target.contentType,
+    key: target.key,
+    size: target.size,
+  }
+}
+
 async function deleteUploadedAvatar(objectKey: string) {
   await fetch('/api/admin/models/avatar/delete', {
     body: JSON.stringify({ objectKey }),
@@ -562,8 +639,4 @@ async function deleteUploadedAvatar(objectKey: string) {
 function filenameStem(filename: string) {
   const dot = filename.lastIndexOf('.')
   return dot > 0 ? filename.slice(0, dot) : filename
-}
-
-function publicAssetUrl(objectKey: string) {
-  return `/api/assets/${objectKey.split('/').map(encodeURIComponent).join('/')}`
 }
