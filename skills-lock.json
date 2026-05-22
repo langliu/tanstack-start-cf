@@ -13,6 +13,12 @@
       "skillPath": "skills/frontend-design/SKILL.md",
       "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
     },
+    "git-commit-message": {
+      "source": "langliu/skills",
+      "sourceType": "github",
+      "skillPath": "skills/git-commit-message/SKILL.md",
+      "computedHash": "c6b858115d71949c2d07520c7ee6b22d9707700072698aa93cae2acb575efdf3"
+    },
     "shadcn": {
       "source": "shadcn/ui",
       "sourceType": "github",
