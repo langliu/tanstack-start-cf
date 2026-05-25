@@ -284,9 +284,13 @@ async function hmacHex(key: Uint8Array, value: string) {
 }
 
 async function hmacBytes(key: Uint8Array, value: string) {
+  const keyData = key.buffer.slice(
+    key.byteOffset,
+    key.byteOffset + key.byteLength,
+  ) as ArrayBuffer
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
-    key,
+    keyData,
     { hash: 'SHA-256', name: 'HMAC' },
     false,
     ['sign'],

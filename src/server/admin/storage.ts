@@ -190,14 +190,17 @@ export async function storeUploadObjects(input: {
 
   const original = await storeImageObject({
     file: input.original,
-    key: createOriginalKey(input.imageId, input.original),
+    key: createOriginalKey(input.imageId, imageFileDescriptor(input.original)),
     sha256: input.originalSha256 ?? true,
   })
 
   const thumbnail = input.thumbnail
     ? await storeImageObject({
         file: input.thumbnail,
-        key: createThumbnailKey(input.imageId, input.thumbnail),
+        key: createThumbnailKey(
+          input.imageId,
+          imageFileDescriptor(input.thumbnail),
+        ),
       })
     : null
 
@@ -215,7 +218,10 @@ export async function storeModelAvatarObject(input: {
 
   return storeImageObject({
     file: input.file,
-    key: createModelAvatarKey(input.modelId ?? crypto.randomUUID(), input.file),
+    key: createModelAvatarKey(
+      input.modelId ?? crypto.randomUUID(),
+      imageFileDescriptor(input.file),
+    ),
   })
 }
 
@@ -288,6 +294,14 @@ function uploadHeaders(contentType: string) {
   return {
     'content-type': contentType,
   }
+}
+
+function imageFileDescriptor(file: File) {
+  return {
+    contentType: file.type,
+    name: file.name,
+    size: file.size,
+  } satisfies ImageFileDescriptor
 }
 
 function createOriginalKey(imageId: string, file: ImageFileDescriptor) {

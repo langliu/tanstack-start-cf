@@ -1,45 +1,44 @@
-import { isNotNull, relations, sql } from 'drizzle-orm'
+import { isNotNull, relations } from 'drizzle-orm'
 import {
   index,
   integer,
+  jsonb,
+  pgTable,
   primaryKey,
-  sqliteTable,
+  serial,
   text,
+  timestamp,
   uniqueIndex,
-} from 'drizzle-orm/sqlite-core'
+} from 'drizzle-orm/pg-core'
 import { user } from './auth-schema.ts'
 
 export * from './auth-schema.ts'
 
-export const todos = sqliteTable('todos', {
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(
-    sql`(unixepoch())`,
-  ),
-  id: integer({ mode: 'number' }).primaryKey({
-    autoIncrement: true,
-  }),
-  title: text().notNull(),
+export const todos = pgTable('todos', {
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
 })
 
 const timestamps = () => ({
-  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .$defaultFn(() => new Date()),
-  updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+  updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull()
     .$defaultFn(() => new Date()),
 })
 
-export const agencies = sqliteTable(
+export const agencies = pgTable(
   'agencies',
   {
     ...timestamps(),
-    description: text(),
-    id: text().primaryKey(),
+    description: text('description'),
+    id: text('id').primaryKey(),
     logoImageId: text('logo_image_id'),
-    name: text().notNull(),
-    notes: text(),
-    slug: text().notNull(),
+    name: text('name').notNull(),
+    notes: text('notes'),
+    slug: text('slug').notNull(),
     websiteUrl: text('website_url'),
   },
   (table) => [
@@ -48,7 +47,7 @@ export const agencies = sqliteTable(
   ],
 )
 
-export const albums = sqliteTable(
+export const albums = pgTable(
   'albums',
   {
     agencyId: text('agency_id').references(() => agencies.id, {
@@ -56,11 +55,11 @@ export const albums = sqliteTable(
     }),
     coverImageId: text('cover_image_id'),
     ...timestamps(),
-    description: text(),
-    id: text().primaryKey(),
-    name: text().notNull(),
-    notes: text(),
-    slug: text().notNull(),
+    description: text('description'),
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    notes: text('notes'),
+    slug: text('slug').notNull(),
     sortOrder: integer('sort_order').notNull().default(0),
   },
   (table) => [
@@ -70,15 +69,15 @@ export const albums = sqliteTable(
   ],
 )
 
-export const tags = sqliteTable(
+export const tags = pgTable(
   'tags',
   {
-    color: text(),
+    color: text('color'),
     ...timestamps(),
-    description: text(),
-    id: text().primaryKey(),
-    name: text().notNull(),
-    slug: text().notNull(),
+    description: text('description'),
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    slug: text('slug').notNull(),
   },
   (table) => [
     uniqueIndex('tags_slug_unique').on(table.slug),
@@ -86,17 +85,17 @@ export const tags = sqliteTable(
   ],
 )
 
-export const models = sqliteTable(
+export const models = pgTable(
   'models',
   {
-    alias: text(),
+    alias: text('alias'),
     avatarImageId: text('avatar_image_id'),
     avatarObjectKey: text('avatar_object_key'),
-    bio: text(),
+    bio: text('bio'),
     ...timestamps(),
-    id: text().primaryKey(),
+    id: text('id').primaryKey(),
     instagramUrl: text('instagram_url'),
-    name: text().notNull(),
+    name: text('name').notNull(),
     weiboUrl: text('weibo_url'),
     xUrl: text('x_url'),
   },
@@ -106,7 +105,7 @@ export const models = sqliteTable(
   ],
 )
 
-export const images = sqliteTable(
+export const images = pgTable(
   'images',
   {
     albumId: text('album_id').references(() => albums.id, {
@@ -115,15 +114,15 @@ export const images = sqliteTable(
     checksumSha256: text('checksum_sha256'),
     contentType: text('content_type').notNull(),
     ...timestamps(),
-    deletedAt: integer('deleted_at', { mode: 'timestamp_ms' }),
-    dominantColors: text('dominant_colors', { mode: 'json' }).$type<string[]>(),
-    exif: text({ mode: 'json' }).$type<Record<string, unknown>>(),
-    filename: text().notNull(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    dominantColors: jsonb('dominant_colors').$type<string[]>(),
+    exif: jsonb('exif').$type<Record<string, unknown>>(),
+    filename: text('filename').notNull(),
     fileSize: integer('file_size').notNull(),
-    format: text().notNull(),
-    height: integer(),
-    id: text().primaryKey(),
-    note: text(),
+    format: text('format').notNull(),
+    height: integer('height'),
+    id: text('id').primaryKey(),
+    note: text('note'),
     originalFilename: text('original_filename').notNull(),
     originalKey: text('original_key').notNull(),
     processingStatus: text('processing_status').notNull().default('ready'),
@@ -134,8 +133,8 @@ export const images = sqliteTable(
     thumbnailKey: text('thumbnail_key'),
     thumbnailSize: integer('thumbnail_size'),
     thumbnailWidth: integer('thumbnail_width'),
-    title: text().notNull(),
-    uploadedAt: integer('uploaded_at', { mode: 'timestamp_ms' })
+    title: text('title').notNull(),
+    uploadedAt: timestamp('uploaded_at', { withTimezone: true })
       .notNull()
       .$defaultFn(() => new Date()),
     uploadedByUserId: text('uploaded_by_user_id').references(() => user.id, {
@@ -156,10 +155,10 @@ export const images = sqliteTable(
   ],
 )
 
-export const imageTags = sqliteTable(
+export const imageTags = pgTable(
   'image_tags',
   {
-    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .$defaultFn(() => new Date()),
     imageId: text('image_id')
@@ -175,10 +174,10 @@ export const imageTags = sqliteTable(
   ],
 )
 
-export const imageModels = sqliteTable(
+export const imageModels = pgTable(
   'image_models',
   {
-    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .$defaultFn(() => new Date()),
     imageId: text('image_id')

@@ -32,6 +32,7 @@
     "@cloudflare/vite-plugin": "^1.37.1",
     "@faker-js/faker": "^10.4.0",
     "@fontsource-variable/inter": "^5.2.8",
+    "@neondatabase/serverless": "^1.1.0",
     "@orpc/client": "^1.14.3",
     "@orpc/json-schema": "^1.14.3",
     "@orpc/openapi": "^1.14.3",
@@ -52,7 +53,6 @@
     "@tanstack/react-table": "latest",
     "@tanstack/router-plugin": "^1.168.6",
     "better-auth": "^1.6.11",
-    "better-sqlite3": "^12.10.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-kit": "^0.31.10",
@@ -75,7 +75,6 @@
     "@tanstack/devtools-vite": "latest",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
-    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^25.9.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -92,8 +91,7 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild",
-      "lightningcss",
-      "better-sqlite3"
+      "lightningcss"
     ]
   }
 }
