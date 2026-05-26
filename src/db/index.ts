@@ -1,13 +1,25 @@
 import { env } from 'cloudflare:workers'
-import { drizzle } from 'drizzle-orm/d1'
+import { neon } from '@neondatabase/serverless'
+import { drizzle } from 'drizzle-orm/neon-http'
 
 import * as schema from './schema.ts'
 
-export function createDb(binding: D1Database) {
-  return drizzle(binding, { schema })
+export function createDb(connectionString: string) {
+  return drizzle(neon(connectionString), { schema })
 }
 
-export const db = createDb(env.DB)
+function getDatabaseUrl() {
+  const value = (env as unknown as Record<string, string | undefined>)
+    .DATABASE_URL
+
+  if (!value) {
+    throw new Error('DATABASE_URL is required')
+  }
+
+  return value
+}
+
+export const db = createDb(getDatabaseUrl())
 
 export type Db = ReturnType<typeof createDb>
 
