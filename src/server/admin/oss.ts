@@ -1,7 +1,5 @@
 import '@tanstack/react-start/server-only'
 
-import { env } from 'cloudflare:workers'
-
 const SIGNATURE_VERSION = 'OSS4-HMAC-SHA256'
 const SERVICE = 'oss'
 const REQUEST_TYPE = 'aliyun_v4_request'
@@ -185,7 +183,7 @@ function getRequiredEnv(name: string) {
 }
 
 function getOptionalEnv(name: string) {
-  const value = (env as unknown as Record<string, string | undefined>)[name]
+  const value = process.env[name]
   return value?.trim() || null
 }
 

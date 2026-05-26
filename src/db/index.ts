@@ -1,4 +1,3 @@
-import { env } from 'cloudflare:workers'
 import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
 
@@ -9,8 +8,7 @@ export function createDb(connectionString: string) {
 }
 
 function getDatabaseUrl() {
-  const value = (env as unknown as Record<string, string | undefined>)
-    .DATABASE_URL
+  const value = process.env.DATABASE_URL
 
   if (!value) {
     throw new Error('DATABASE_URL is required')

@@ -1,0 +1,19 @@
+{
+  "buildCommand": "bun run build:production",
+  "devCommand": "bun run dev",
+  "installCommand": "bun install",
+  "framework": null,
+  "outputDirectory": "dist/client",
+  "rewrites": [
+    {
+      "source": "/((?!assets/|favicon\\.ico|robots\\.txt|manifest\\.json|logo192\\.png|logo512\\.png|drizzle\\.svg).*)",
+      "destination": "/api/server"
+    }
+  ],
+  "functions": {
+    "api/server.js": {
+      "runtime": "nodejs20.x",
+      "includeFiles": "dist/server/**"
+    }
+  }
+}
