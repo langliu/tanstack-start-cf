@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX `images_checksum_sha256_unique` ON `images` (`checksum_sha256`) WHERE "images"."checksum_sha256" is not null;

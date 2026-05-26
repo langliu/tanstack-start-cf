@@ -10,21 +10,16 @@
 - 在写 UI 之前先检查 `src/components/ui/` 下是否有可用的组件。
 - 如需新增组件，使用 `npx shadcn@latest add <组件名>` 添加。
 
-## Cloudflare D1 本地开发
+## 数据库
 
-- `bun run dev` 默认使用本地 D1 数据库。
-- 本地 D1 状态存放在 `.wrangler/state/v3/d1`。
-- 本地开发会读写本地 D1 数据库，不会读写 Cloudflare 远程 D1 数据库。
-- 使用下面的命令应用本地 D1 migration：
+- 项目使用 **Neon**（Serverless PostgreSQL），通过 `@neondatabase/serverless` 和 `drizzle-orm/neon-http` 连接。
+- 数据库连接串通过环境变量 `DATABASE_URL` 配置。
+- 使用 Drizzle ORM 管理 schema，migration 文件在 `drizzle/` 目录。
+- 生成 migration：`bunx drizzle-kit generate`
+- 应用 migration：`bunx drizzle-kit migrate`
 
-  ```bash
-  bunx wrangler d1 migrations apply DB --local
-  ```
+## 对象存储
 
-- 如需操作远程 D1 数据库，必须显式传入 `--remote`，例如：
-
-  ```bash
-  bunx wrangler d1 migrations apply DB --env staging --remote
-  ```
-
-- 除非明确希望本地开发连接远程数据库，否则不要给 D1 binding 添加 `remote: true`。
+- 图片等静态资源存储在 **阿里云 OSS** 上。
+- 上传使用 OSS4-HMAC-SHA256 签名生成预签名 URL，客户端直传到 OSS。
+- 相关 OSS 环境变量：`OSS_REGION`、`OSS_BUCKET`、`OSS_ENDPOINT`、`OSS_PUBLIC_BASE_URL`、`OSS_ACCESS_KEY_ID`、`OSS_ACCESS_KEY_SECRET`。
