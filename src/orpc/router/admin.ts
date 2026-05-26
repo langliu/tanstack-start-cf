@@ -14,7 +14,7 @@ import {
   deleteImages,
   deleteModel,
   deleteTag,
-  findImageByChecksumSha256,
+  findImageIdByChecksumSha256,
   getAlbum,
   getImageDetail,
   listAgencies,
@@ -198,7 +198,10 @@ export const admin = {
       ),
     findByChecksum: adminProcedure
       .input(ImageChecksumInputSchema)
-      .handler(({ input }) => findImageByChecksumSha256(input.checksumSha256)),
+      .handler(async ({ input }) => {
+        const id = await findImageIdByChecksumSha256(input.checksumSha256)
+        return id ? { id } : null
+      }),
     list: adminProcedure
       .input(ImageListInputSchema)
       .handler(({ input }) => listImages(input)),

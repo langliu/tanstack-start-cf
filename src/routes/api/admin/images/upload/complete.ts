@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import * as z from 'zod'
 import {
   createImageRecord,
-  findImageByChecksumSha256,
+  findImageIdByChecksumSha256,
 } from '#/server/admin/assets'
 import { requireAdminSession } from '#/server/admin/auth'
 import {
@@ -60,15 +60,6 @@ async function complete({ request }: { request: Request }) {
       uploadedKeys.push(input.thumbnail.key)
     }
 
-    const existingImage = await findImageByChecksumSha256(checksumSha256)
-    if (existingImage) {
-      await deleteImageObjects(uploadedKeys)
-      return Response.json(
-        { duplicate: true, image: existingImage },
-        { status: 200 },
-      )
-    }
-
     const [original, thumbnail] = await Promise.all([
       assertUploadedImageObject({
         contentType: input.original.contentType,
@@ -87,15 +78,6 @@ async function complete({ request }: { request: Request }) {
     ])
 
     try {
-      const duplicateImage = await findImageByChecksumSha256(checksumSha256)
-      if (duplicateImage) {
-        await deleteImageObjects(uploadedKeys)
-        return Response.json(
-          { duplicate: true, image: duplicateImage },
-          { status: 200 },
-        )
-      }
-
       const image = await createImageRecord({
         ...(input.metadata ?? {}),
         id: input.imageId,
@@ -110,15 +92,16 @@ async function complete({ request }: { request: Request }) {
         uploadedByUserId: session.user.id,
       })
 
-      return Response.json({ image }, { status: 201 })
+      return Response.json({ imageId: image.id }, { status: 201 })
     } catch (error) {
       await deleteImageObjects(uploadedKeys)
 
       if (isChecksumUniqueConstraintError(error)) {
-        const duplicateImage = await findImageByChecksumSha256(checksumSha256)
-        if (duplicateImage) {
+        const duplicateImageId =
+          await findImageIdByChecksumSha256(checksumSha256)
+        if (duplicateImageId) {
           return Response.json(
-            { duplicate: true, image: duplicateImage },
+            { duplicate: true, imageId: duplicateImageId },
             { status: 200 },
           )
         }

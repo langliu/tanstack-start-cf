@@ -340,26 +340,41 @@ export function AdminImageLibrary({
 
     setUploading(true)
     try {
+      const fileList = Array.from(files)
+      const concurrency = 8
       let skippedDuplicates = 0
       const uploadedChecksums = new Set<string>()
+      const errors: string[] = []
 
-      for (const file of Array.from(files)) {
-        const checksumSha256 = await sha256File(file)
+      let refreshTimer: ReturnType<typeof setTimeout> | null = null
+
+      function scheduleRefresh() {
+        if (refreshTimer) {
+          clearTimeout(refreshTimer)
+        }
+        refreshTimer = setTimeout(() => {
+          refreshTimer = null
+          void Promise.all([
+            queryClient.invalidateQueries({ queryKey: imageListQueryKey }),
+            queryClient.invalidateQueries({
+              queryKey: orpc.admin.stats.queryOptions({ input: {} }).queryKey,
+            }),
+          ]).then(() => {
+            setImageGridVersion((version) => version + 1)
+          })
+        }, 350)
+      }
+
+      async function processFile(file: File) {
+        const [checksumSha256, preparedImage] = await Promise.all([
+          sha256File(file),
+          prepareUpload(file),
+        ])
         if (uploadedChecksums.has(checksumSha256)) {
           skippedDuplicates += 1
-          continue
+          return
         }
 
-        const existingImage = await orpc.admin.images.findByChecksum.call({
-          checksumSha256,
-        })
-        if (existingImage) {
-          skippedDuplicates += 1
-          uploadedChecksums.add(checksumSha256)
-          continue
-        }
-
-        const preparedImage = await prepareUpload(file)
         const preparedUpload = await prepareDirectImageUpload({
           checksumSha256,
           original: file,
@@ -369,21 +384,30 @@ export function AdminImageLibrary({
         if (preparedUpload.duplicate) {
           skippedDuplicates += 1
           uploadedChecksums.add(checksumSha256)
-          continue
+          return
         }
 
         const uploadedKeys: string[] = []
         try {
-          await uploadToObjectStorage(preparedUpload.upload.original, file)
-          uploadedKeys.push(preparedUpload.upload.original.key)
-
+          const uploadTasks = [
+            uploadToObjectStorage(
+              preparedUpload.upload.original,
+              file,
+            ).then(() => {
+              uploadedKeys.push(preparedUpload.upload.original.key)
+            }),
+          ]
           if (preparedImage.thumbnail && preparedUpload.upload.thumbnail) {
-            await uploadToObjectStorage(
-              preparedUpload.upload.thumbnail,
-              preparedImage.thumbnail,
+            uploadTasks.push(
+              uploadToObjectStorage(
+                preparedUpload.upload.thumbnail,
+                preparedImage.thumbnail,
+              ).then(() => {
+                uploadedKeys.push(preparedUpload.upload.thumbnail!.key)
+              }),
             )
-            uploadedKeys.push(preparedUpload.upload.thumbnail.key)
           }
+          await Promise.all(uploadTasks)
 
           const response = await fetch('/api/admin/images/upload/complete', {
             body: JSON.stringify({
@@ -420,21 +444,52 @@ export function AdminImageLibrary({
           if (payload?.duplicate) {
             skippedDuplicates += 1
           }
+
+          uploadedChecksums.add(checksumSha256)
+          scheduleRefresh()
         } catch (error) {
           if (uploadedKeys.length > 0) {
             await cancelDirectImageUpload(uploadedKeys)
           }
           throw error
         }
-        uploadedChecksums.add(checksumSha256)
       }
-      await invalidateAdminQueries(queryClient)
+
+      let nextIndex = 0
+      async function worker() {
+        while (nextIndex < fileList.length) {
+          const file = fileList[nextIndex++]
+          try {
+            await processFile(file)
+          } catch (error) {
+            errors.push(error instanceof Error ? error.message : '上传失败')
+          }
+        }
+      }
+
+      const workers = Array.from(
+        { length: Math.min(concurrency, fileList.length) },
+        () => worker(),
+      )
+      await Promise.all(workers)
+
+      if (refreshTimer) {
+        clearTimeout(refreshTimer)
+        refreshTimer = null
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: imageListQueryKey }),
+        queryClient.invalidateQueries({
+          queryKey: orpc.admin.stats.queryOptions({ input: {} }).queryKey,
+        }),
+      ])
       setImageGridVersion((version) => version + 1)
+      if (errors.length > 0) {
+        setUploadError(errors.join('；'))
+      }
       if (skippedDuplicates > 0) {
         setUploadNotice(`已跳过 ${skippedDuplicates} 张重复图片`)
       }
-    } catch (error) {
-      setUploadError(error instanceof Error ? error.message : '上传失败')
     } finally {
       setUploading(false)
     }

@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import * as z from 'zod'
-import { findImageByChecksumSha256 } from '#/server/admin/assets'
+import { findImageIdByChecksumSha256 } from '#/server/admin/assets'
 import { requireAdminSession } from '#/server/admin/auth'
 import { createUploadObjectTargets } from '#/server/admin/storage'
 import { createId } from '#/server/admin/utils'
@@ -26,11 +26,11 @@ async function prepare({ request }: { request: Request }) {
 
     const input = PrepareImageUploadSchema.parse(await request.json())
     const checksumSha256 = input.checksumSha256.trim().toLowerCase()
-    const existingImage = await findImageByChecksumSha256(checksumSha256)
+    const existingImageId = await findImageIdByChecksumSha256(checksumSha256)
 
-    if (existingImage) {
+    if (existingImageId) {
       return Response.json(
-        { duplicate: true, image: existingImage },
+        { duplicate: true, imageId: existingImageId },
         { status: 200 },
       )
     }

@@ -662,49 +662,73 @@ export async function findImageByChecksumSha256(checksumSha256: string) {
   return formatImage(row, relationMaps)
 }
 
+export async function findImageIdByChecksumSha256(checksumSha256: string) {
+  const normalizedChecksum = checksumSha256.trim().toLowerCase()
+  if (normalizedChecksum.length === 0) {
+    return null
+  }
+
+  const [row] = await db
+    .select({ id: images.id })
+    .from(images)
+    .where(eq(images.checksumSha256, normalizedChecksum))
+    .orderBy(desc(images.uploadedAt), desc(images.id))
+    .limit(1)
+
+  return row?.id ?? null
+}
+
 export async function createImageRecord(input: CreateImageRecordInput) {
   const id = input.id ?? createId()
   const date = now()
   const title = input.title?.trim() || filenameStem(input.originalFilename)
   const originalFormat = input.storage.original.contentType.split('/')[1] ?? ''
 
-  await db.insert(images).values({
-    albumId: input.albumId ?? null,
-    checksumSha256: input.storage.original.sha256 ?? null,
-    contentType: input.storage.original.contentType,
-    createdAt: date,
-    dominantColors: input.dominantColors ?? null,
-    exif: input.exif ?? null,
-    filename: input.originalFilename,
-    fileSize: input.storage.original.size,
-    format: originalFormat.toUpperCase(),
-    height: input.height ?? null,
-    id,
-    note: nullableText(input.note),
-    originalFilename: input.originalFilename,
-    originalKey: input.storage.original.key,
-    processingStatus: input.storage.thumbnail ? 'ready' : 'thumbnail_pending',
-    rating: input.rating ?? 0,
-    sourceUrl: nullableText(input.sourceUrl),
-    thumbnailContentType: input.storage.thumbnail?.contentType ?? null,
-    thumbnailKey: input.storage.thumbnail?.key ?? null,
-    thumbnailSize: input.storage.thumbnail?.size ?? null,
-    title,
-    updatedAt: date,
-    uploadedAt: date,
-    uploadedByUserId: input.uploadedByUserId ?? null,
-    width: input.width ?? null,
-  })
+  const [image] = await db
+    .insert(images)
+    .values({
+      albumId: input.albumId ?? null,
+      checksumSha256: input.storage.original.sha256 ?? null,
+      contentType: input.storage.original.contentType,
+      createdAt: date,
+      dominantColors: input.dominantColors ?? null,
+      exif: input.exif ?? null,
+      filename: input.originalFilename,
+      fileSize: input.storage.original.size,
+      format: originalFormat.toUpperCase(),
+      height: input.height ?? null,
+      id,
+      note: nullableText(input.note),
+      originalFilename: input.originalFilename,
+      originalKey: input.storage.original.key,
+      processingStatus: input.storage.thumbnail
+        ? 'ready'
+        : 'thumbnail_pending',
+      rating: input.rating ?? 0,
+      sourceUrl: nullableText(input.sourceUrl),
+      thumbnailContentType: input.storage.thumbnail?.contentType ?? null,
+      thumbnailKey: input.storage.thumbnail?.key ?? null,
+      thumbnailSize: input.storage.thumbnail?.size ?? null,
+      title,
+      updatedAt: date,
+      uploadedAt: date,
+      uploadedByUserId: input.uploadedByUserId ?? null,
+      width: input.width ?? null,
+    })
+    .returning()
 
-  await replaceImageTags(id, input.tagIds ?? [])
-  await replaceImageModels(id, input.modelIds ?? [])
-
-  const detail = await getImageDetail(id)
-  if (!detail) {
+  if (!image) {
     throw new Error('Failed to load uploaded image')
   }
 
-  return detail
+  if (input.tagIds?.length) {
+    await replaceImageTags(id, input.tagIds)
+  }
+  if (input.modelIds?.length) {
+    await replaceImageModels(id, input.modelIds)
+  }
+
+  return image
 }
 
 export async function updateImage(input: {
