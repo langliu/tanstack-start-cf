@@ -2,6 +2,9 @@
   "name": "kite",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
   "imports": {
     "#/*": "./src/*"
   },
