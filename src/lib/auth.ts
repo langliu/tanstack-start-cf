@@ -6,6 +6,15 @@ import { tanstackStartCookies } from 'better-auth/tanstack-start'
 import { db, schema } from '#/db/index'
 
 export const auth = betterAuth({
+  baseURL: {
+    allowedHosts: [
+      'localhost:3000',
+      ...(process.env.BETTER_AUTH_URL
+        ? [new URL(process.env.BETTER_AUTH_URL).host]
+        : []),
+      '*.vercel.app',
+    ],
+  },
   database: drizzleAdapter(db, {
     provider: 'pg',
     schema,
@@ -14,5 +23,4 @@ export const auth = betterAuth({
     enabled: true,
   },
   plugins: [tanstackStartCookies()],
-  trustedOrigins: ['http://localhost:3000', 'http://127.0.0.1:3000'],
 })

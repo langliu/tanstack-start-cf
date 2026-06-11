@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Development
+.git/
+.gitignore
+.vscode/
+*.md
+README.md
+AGENTS.md
+.cursorrules
+.cta.json
+skills-lock.json
+.agents/
+
+# Env files
+.env
+.env.local

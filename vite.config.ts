@@ -1,4 +1,3 @@
-import { cloudflare } from '@cloudflare/vite-plugin'
 import babel from '@rolldown/plugin-babel'
 import tailwindcss from '@tailwindcss/vite'
 import { devtools } from '@tanstack/devtools-vite'
@@ -7,12 +6,14 @@ import viteReact, { reactCompilerPreset } from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
 const config = defineConfig({
+  ssr: {
+    noExternal: true,
+  },
   optimizeDeps: {
     exclude: ['@better-auth/drizzle-adapter', 'better-auth/adapters/drizzle'],
   },
   plugins: [
     devtools(),
-    cloudflare({ viteEnvironment: { name: 'ssr' } }),
     tailwindcss(),
     tanstackStart(),
     viteReact(),

@@ -1,7 +1,10 @@
 {
-  "name": "tanstack-start-cf",
+  "name": "kite",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
   "imports": {
     "#/*": "./src/*"
   },
@@ -15,12 +18,9 @@
     "check": "biome check --write",
     "build:staging": "vite build --mode staging",
     "build:production": "vite build --mode production",
-    "deploy:staging": "bun run build:staging && wrangler deploy",
-    "deploy:production": "bun run build:production && wrangler deploy",
-    "deploy:dry": "wrangler deploy --dry-run",
-    "tail:staging": "wrangler tail --env staging",
-    "tail:production": "wrangler tail --env production",
-    "types": "wrangler types",
+    "deploy:staging": "bun run build:staging && vercel deploy",
+    "deploy:production": "bun run build:production && vercel deploy --prod",
+    "deploy:dry": "vercel deploy --dry-run",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
@@ -29,7 +29,6 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
-    "@cloudflare/vite-plugin": "^1.37.1",
     "@faker-js/faker": "^10.4.0",
     "@fontsource-variable/inter": "^5.2.8",
     "@neondatabase/serverless": "^1.1.0",
@@ -69,7 +68,6 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.15",
-    "@cloudflare/workers-types": "^4.20260519.1",
     "@rolldown/plugin-babel": "^0.2.3",
     "@tailwindcss/typography": "^0.5.19",
     "@tanstack/devtools-vite": "latest",
@@ -84,14 +82,8 @@
     "jsdom": "^29.1.1",
     "tsx": "^4.22.2",
     "typescript": "^6.0.3",
+    "vercel": "^54.4.1",
     "vite": "^8.0.13",
-    "vitest": "^4.1.6",
-    "wrangler": "^4.92.0"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "lightningcss"
-    ]
+    "vitest": "^4.1.6"
   }
 }
