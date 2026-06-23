@@ -213,7 +213,11 @@ function additionalHeaderNames(headers: Record<string, string>) {
 }
 
 function isImplicitSignedHeader(name: string) {
-  return name === 'content-type' || name === 'content-md5' || name.startsWith('x-oss-')
+  return (
+    name === 'content-type' ||
+    name === 'content-md5' ||
+    name.startsWith('x-oss-')
+  )
 }
 
 function canonicalHeaders(headers: Record<string, string>) {
@@ -240,8 +244,9 @@ function encodeCanonicalPath(path: string) {
 }
 
 function uriEncode(value: string) {
-  return encodeURIComponent(value).replace(/[!'()*]/g, (char) =>
-    `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
+  return encodeURIComponent(value).replace(
+    /[!'()*]/g,
+    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
   )
 }
 

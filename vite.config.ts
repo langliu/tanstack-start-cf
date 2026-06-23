@@ -5,10 +5,7 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact, { reactCompilerPreset } from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
-const config = defineConfig({
-  ssr: {
-    noExternal: true,
-  },
+const config = defineConfig(({ command }) => ({
   optimizeDeps: {
     exclude: ['@better-auth/drizzle-adapter', 'better-auth/adapters/drizzle'],
   },
@@ -20,6 +17,7 @@ const config = defineConfig({
     babel({ presets: [reactCompilerPreset()] }),
   ],
   resolve: { tsconfigPaths: true },
-})
+  ssr: command === 'serve' ? undefined : { noExternal: true },
+}))
 
 export default config

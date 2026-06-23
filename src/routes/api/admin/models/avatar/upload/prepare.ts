@@ -34,10 +34,12 @@ async function prepare({ request }: { request: Request }) {
   }
 }
 
-export const Route = createFileRoute('/api/admin/models/avatar/upload/prepare')({
-  server: {
-    handlers: {
-      POST: prepare,
+export const Route = createFileRoute('/api/admin/models/avatar/upload/prepare')(
+  {
+    server: {
+      handlers: {
+        POST: prepare,
+      },
     },
   },
-})
+)

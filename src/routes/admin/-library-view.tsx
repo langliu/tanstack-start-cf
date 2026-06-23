@@ -390,20 +390,20 @@ export function AdminImageLibrary({
         const uploadedKeys: string[] = []
         try {
           const uploadTasks = [
-            uploadToObjectStorage(
-              preparedUpload.upload.original,
-              file,
-            ).then(() => {
-              uploadedKeys.push(preparedUpload.upload.original.key)
-            }),
+            uploadToObjectStorage(preparedUpload.upload.original, file).then(
+              () => {
+                uploadedKeys.push(preparedUpload.upload.original.key)
+              },
+            ),
           ]
-          if (preparedImage.thumbnail && preparedUpload.upload.thumbnail) {
+          const thumbnailUpload = preparedUpload.upload.thumbnail
+          if (preparedImage.thumbnail && thumbnailUpload) {
             uploadTasks.push(
               uploadToObjectStorage(
-                preparedUpload.upload.thumbnail,
+                thumbnailUpload,
                 preparedImage.thumbnail,
               ).then(() => {
-                uploadedKeys.push(preparedUpload.upload.thumbnail!.key)
+                uploadedKeys.push(thumbnailUpload.key)
               }),
             )
           }

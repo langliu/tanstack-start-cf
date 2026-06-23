@@ -10,9 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ImagesRouteImport } from './routes/images'
+import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AlbumsIndexRouteImport } from './routes/albums/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as DemoTableRouteImport } from './routes/demo/table'
@@ -20,6 +23,7 @@ import { Route as DemoOrpcTodoRouteImport } from './routes/demo/orpc-todo'
 import { Route as DemoDrizzleRouteImport } from './routes/demo/drizzle'
 import { Route as DemoBetterAuthRouteImport } from './routes/demo/better-auth'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
+import { Route as AlbumsAlbumSlugRouteImport } from './routes/albums/$albumSlug'
 import { Route as AdminTrashRouteImport } from './routes/admin/trash'
 import { Route as AdminTagsRouteImport } from './routes/admin/tags'
 import { Route as AdminModelsRouteImport } from './routes/admin/models'
@@ -46,6 +50,16 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ImagesRoute = ImagesRouteImport.update({
+  id: '/images',
+  path: '/images',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -59,6 +73,11 @@ const AdminRouteRoute = AdminRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AlbumsIndexRoute = AlbumsIndexRouteImport.update({
+  id: '/albums/',
+  path: '/albums/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -94,6 +113,11 @@ const DemoBetterAuthRoute = DemoBetterAuthRouteImport.update({
 const ApiSplatRoute = ApiSplatRouteImport.update({
   id: '/api/$',
   path: '/api/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AlbumsAlbumSlugRoute = AlbumsAlbumSlugRouteImport.update({
+  id: '/albums/$albumSlug',
+  path: '/albums/$albumSlug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminTrashRoute = AdminTrashRouteImport.update({
@@ -208,12 +232,15 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/explore': typeof ExploreRoute
+  '/images': typeof ImagesRoute
   '/login': typeof LoginRoute
   '/admin/albums': typeof AdminAlbumsRouteRouteWithChildren
   '/admin/agencies': typeof AdminAgenciesRoute
   '/admin/models': typeof AdminModelsRoute
   '/admin/tags': typeof AdminTagsRoute
   '/admin/trash': typeof AdminTrashRoute
+  '/albums/$albumSlug': typeof AlbumsAlbumSlugRoute
   '/api/$': typeof ApiSplatRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/drizzle': typeof DemoDrizzleRoute
@@ -221,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/admin/': typeof AdminIndexRoute
+  '/albums/': typeof AlbumsIndexRoute
   '/admin/albums/$albumId': typeof AdminAlbumsAlbumIdRoute
   '/api/assets/$': typeof ApiAssetsSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -240,11 +268,14 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/explore': typeof ExploreRoute
+  '/images': typeof ImagesRoute
   '/login': typeof LoginRoute
   '/admin/agencies': typeof AdminAgenciesRoute
   '/admin/models': typeof AdminModelsRoute
   '/admin/tags': typeof AdminTagsRoute
   '/admin/trash': typeof AdminTrashRoute
+  '/albums/$albumSlug': typeof AlbumsAlbumSlugRoute
   '/api/$': typeof ApiSplatRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/drizzle': typeof DemoDrizzleRoute
@@ -252,6 +283,7 @@ export interface FileRoutesByTo {
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/admin': typeof AdminIndexRoute
+  '/albums': typeof AlbumsIndexRoute
   '/admin/albums/$albumId': typeof AdminAlbumsAlbumIdRoute
   '/api/assets/$': typeof ApiAssetsSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -273,12 +305,15 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/explore': typeof ExploreRoute
+  '/images': typeof ImagesRoute
   '/login': typeof LoginRoute
   '/admin/albums': typeof AdminAlbumsRouteRouteWithChildren
   '/admin/agencies': typeof AdminAgenciesRoute
   '/admin/models': typeof AdminModelsRoute
   '/admin/tags': typeof AdminTagsRoute
   '/admin/trash': typeof AdminTrashRoute
+  '/albums/$albumSlug': typeof AlbumsAlbumSlugRoute
   '/api/$': typeof ApiSplatRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/drizzle': typeof DemoDrizzleRoute
@@ -286,6 +321,7 @@ export interface FileRoutesById {
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/admin/': typeof AdminIndexRoute
+  '/albums/': typeof AlbumsIndexRoute
   '/admin/albums/$albumId': typeof AdminAlbumsAlbumIdRoute
   '/api/assets/$': typeof ApiAssetsSplatRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -308,12 +344,15 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/about'
+    | '/explore'
+    | '/images'
     | '/login'
     | '/admin/albums'
     | '/admin/agencies'
     | '/admin/models'
     | '/admin/tags'
     | '/admin/trash'
+    | '/albums/$albumSlug'
     | '/api/$'
     | '/demo/better-auth'
     | '/demo/drizzle'
@@ -321,6 +360,7 @@ export interface FileRouteTypes {
     | '/demo/table'
     | '/demo/tanstack-query'
     | '/admin/'
+    | '/albums/'
     | '/admin/albums/$albumId'
     | '/api/assets/$'
     | '/api/auth/$'
@@ -340,11 +380,14 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/explore'
+    | '/images'
     | '/login'
     | '/admin/agencies'
     | '/admin/models'
     | '/admin/tags'
     | '/admin/trash'
+    | '/albums/$albumSlug'
     | '/api/$'
     | '/demo/better-auth'
     | '/demo/drizzle'
@@ -352,6 +395,7 @@ export interface FileRouteTypes {
     | '/demo/table'
     | '/demo/tanstack-query'
     | '/admin'
+    | '/albums'
     | '/admin/albums/$albumId'
     | '/api/assets/$'
     | '/api/auth/$'
@@ -372,12 +416,15 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/about'
+    | '/explore'
+    | '/images'
     | '/login'
     | '/admin/albums'
     | '/admin/agencies'
     | '/admin/models'
     | '/admin/tags'
     | '/admin/trash'
+    | '/albums/$albumSlug'
     | '/api/$'
     | '/demo/better-auth'
     | '/demo/drizzle'
@@ -385,6 +432,7 @@ export interface FileRouteTypes {
     | '/demo/table'
     | '/demo/tanstack-query'
     | '/admin/'
+    | '/albums/'
     | '/admin/albums/$albumId'
     | '/api/assets/$'
     | '/api/auth/$'
@@ -406,13 +454,17 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
+  ExploreRoute: typeof ExploreRoute
+  ImagesRoute: typeof ImagesRoute
   LoginRoute: typeof LoginRoute
+  AlbumsAlbumSlugRoute: typeof AlbumsAlbumSlugRoute
   ApiSplatRoute: typeof ApiSplatRoute
   DemoBetterAuthRoute: typeof DemoBetterAuthRoute
   DemoDrizzleRoute: typeof DemoDrizzleRoute
   DemoOrpcTodoRoute: typeof DemoOrpcTodoRoute
   DemoTableRoute: typeof DemoTableRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
+  AlbumsIndexRoute: typeof AlbumsIndexRoute
   ApiAssetsSplatRoute: typeof ApiAssetsSplatRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiRpcSplatRoute: typeof ApiRpcSplatRoute
@@ -430,6 +482,20 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/images': {
+      id: '/images'
+      path: '/images'
+      fullPath: '/images'
+      preLoaderRoute: typeof ImagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -451,6 +517,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/albums/': {
+      id: '/albums/'
+      path: '/albums'
+      fullPath: '/albums/'
+      preLoaderRoute: typeof AlbumsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -500,6 +573,13 @@ declare module '@tanstack/react-router' {
       path: '/api/$'
       fullPath: '/api/$'
       preLoaderRoute: typeof ApiSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/albums/$albumSlug': {
+      id: '/albums/$albumSlug'
+      path: '/albums/$albumSlug'
+      fullPath: '/albums/$albumSlug'
+      preLoaderRoute: typeof AlbumsAlbumSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/trash': {
@@ -717,13 +797,17 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRouteRoute: AdminRouteRouteWithChildren,
   AboutRoute: AboutRoute,
+  ExploreRoute: ExploreRoute,
+  ImagesRoute: ImagesRoute,
   LoginRoute: LoginRoute,
+  AlbumsAlbumSlugRoute: AlbumsAlbumSlugRoute,
   ApiSplatRoute: ApiSplatRoute,
   DemoBetterAuthRoute: DemoBetterAuthRoute,
   DemoDrizzleRoute: DemoDrizzleRoute,
   DemoOrpcTodoRoute: DemoOrpcTodoRoute,
   DemoTableRoute: DemoTableRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
+  AlbumsIndexRoute: AlbumsIndexRoute,
   ApiAssetsSplatRoute: ApiAssetsSplatRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiRpcSplatRoute: ApiRpcSplatRoute,

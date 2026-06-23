@@ -36,7 +36,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         name: 'viewport',
       },
       {
-        title: 'TanStack Start Starter',
+        title: 'Kite Gallery',
       },
     ],
   }),

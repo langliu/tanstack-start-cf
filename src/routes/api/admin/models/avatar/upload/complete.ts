@@ -40,14 +40,18 @@ async function complete({ request }: { request: Request }) {
     )
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to complete avatar upload'
+      error instanceof Error
+        ? error.message
+        : 'Failed to complete avatar upload'
     const status = message === 'Unauthorized' ? 401 : 400
 
     return Response.json({ error: message }, { status })
   }
 }
 
-export const Route = createFileRoute('/api/admin/models/avatar/upload/complete')({
+export const Route = createFileRoute(
+  '/api/admin/models/avatar/upload/complete',
+)({
   server: {
     handlers: {
       POST: complete,

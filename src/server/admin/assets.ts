@@ -25,6 +25,7 @@ import {
   models,
   tags,
 } from '#/db/schema'
+import { createOssSignedAssetUrl } from './oss'
 import { deleteImageObjects, type StoredUploadObjects } from './storage'
 import {
   createId,
@@ -34,7 +35,6 @@ import {
   nullableText,
   uniqueValues,
 } from './utils'
-import { createOssSignedAssetUrl } from './oss'
 
 type Agency = typeof agencies.$inferSelect
 type Album = typeof albums.$inferSelect
@@ -701,9 +701,7 @@ export async function createImageRecord(input: CreateImageRecordInput) {
       note: nullableText(input.note),
       originalFilename: input.originalFilename,
       originalKey: input.storage.original.key,
-      processingStatus: input.storage.thumbnail
-        ? 'ready'
-        : 'thumbnail_pending',
+      processingStatus: input.storage.thumbnail ? 'ready' : 'thumbnail_pending',
       rating: input.rating ?? 0,
       sourceUrl: nullableText(input.sourceUrl),
       thumbnailContentType: input.storage.thumbnail?.contentType ?? null,
@@ -1172,19 +1170,22 @@ async function fetchAlbumCoverMap(albumRows: Album[]) {
     .where(and(inArray(images.id, coverImageIds), isNull(images.deletedAt)))
 
   const entries = await Promise.all(
-    coverRows.map(async (image) => [
-      image.id,
-      {
-        albumId: image.albumId,
-        height: image.height,
-        id: image.id,
-        thumbnailUrl: image.thumbnailKey
-          ? await signedAssetUrl(image.thumbnailKey)
-          : await signedAssetUrl(image.originalKey),
-        title: image.title,
-        width: image.width,
-      },
-    ] as const),
+    coverRows.map(
+      async (image) =>
+        [
+          image.id,
+          {
+            albumId: image.albumId,
+            height: image.height,
+            id: image.id,
+            thumbnailUrl: image.thumbnailKey
+              ? await signedAssetUrl(image.thumbnailKey)
+              : await signedAssetUrl(image.originalKey),
+            title: image.title,
+            width: image.width,
+          },
+        ] as const,
+    ),
   )
 
   return new Map(entries)

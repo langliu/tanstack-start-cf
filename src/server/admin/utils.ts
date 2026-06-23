@@ -1,7 +1,5 @@
 import '@tanstack/react-start/server-only'
 
-import { publicOssAssetUrl } from './oss'
-
 export function createId() {
   return crypto.randomUUID()
 }
@@ -66,10 +64,5 @@ export function safeFilename(filename: string) {
 }
 
 export function publicAssetPath(key: string) {
-  const ossUrl = publicOssAssetUrl(key)
-  if (ossUrl) {
-    return ossUrl
-  }
-
   return `/api/assets/${key.split('/').map(encodeURIComponent).join('/')}`
 }

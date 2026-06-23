@@ -5,7 +5,11 @@ import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { authClient } from '#/lib/auth-client'
 
-export function AdminLoginForm({ redirectTo = '/admin' }: { redirectTo?: string }) {
+export function AdminLoginForm({
+  redirectTo = '/admin',
+}: {
+  redirectTo?: string
+}) {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
