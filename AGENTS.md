@@ -8,15 +8,15 @@
 
 - 优先使用 shadcn/ui 提供的组件（`src/components/ui/`），不要自己实现。
 - 在写 UI 之前先检查 `src/components/ui/` 下是否有可用的组件。
-- 如需新增组件，使用 `npx shadcn@latest add <组件名>` 添加。
+- 如需新增组件，使用 `pnpm dlx shadcn@latest add <组件名>` 添加。
 
 ## 数据库
 
 - 项目使用 **Neon**（Serverless PostgreSQL），通过 `@neondatabase/serverless` 和 `drizzle-orm/neon-http` 连接。
 - 数据库连接串通过环境变量 `DATABASE_URL` 配置。
 - 使用 Drizzle ORM 管理 schema，migration 文件在 `drizzle/` 目录。
-- 生成 migration：`bunx drizzle-kit generate`
-- 应用 migration：`bunx drizzle-kit migrate`
+- 生成 migration：`pnpm db:generate`
+- 应用 migration：`pnpm db:migrate`
 
 ## 对象存储
 

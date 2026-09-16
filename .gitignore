@@ -11,3 +11,4 @@ dist-ssr
 __unconfig*
 todos.json
 .wrangler
+.pnpm-debug.log*

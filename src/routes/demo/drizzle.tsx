@@ -162,19 +162,19 @@ function DemoDrizzle() {
               <li>
                 Run:{' '}
                 <code className='px-2 py-1 rounded bg-black/30 text-purple-300'>
-                  bunx --bun drizzle-kit generate
+                  pnpm db:generate
                 </code>
               </li>
               <li>
                 Run:{' '}
                 <code className='px-2 py-1 rounded bg-black/30 text-purple-300'>
-                  bunx --bun drizzle-kit migrate
+                  pnpm db:migrate
                 </code>
               </li>
               <li>
                 Optional:{' '}
                 <code className='px-2 py-1 rounded bg-black/30 text-purple-300'>
-                  bunx --bun drizzle-kit studio
+                  pnpm db:studio
                 </code>
               </li>
             </ol>
