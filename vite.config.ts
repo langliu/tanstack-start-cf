@@ -14,7 +14,9 @@ const config = defineConfig(({ command }) => ({
     tailwindcss(),
     tanstackStart(),
     viteReact(),
-    babel({ presets: [reactCompilerPreset()] }),
+    command === 'build'
+      ? babel({ presets: [reactCompilerPreset()] })
+      : undefined,
   ],
   resolve: { tsconfigPaths: true },
   ssr: command === 'serve' ? undefined : { noExternal: true },
