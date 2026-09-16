@@ -133,18 +133,18 @@ function ImagesPage() {
         </div>
       </section>
 
-      <section className='mb-8 rounded-md border border-[var(--line)] bg-[var(--surface-strong)] p-3'>
-        <div className='grid gap-3 lg:grid-cols-[minmax(240px,1fr)_170px_170px_170px_auto]'>
+      <section className='mb-8 rounded-md border border-[var(--line)] bg-[var(--surface-strong)] p-4 shadow-[0_1px_0_var(--inset-glint)_inset,0_16px_36px_rgba(27,34,46,0.06)]'>
+        <div className='grid items-center gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(20rem,1fr)_7.5rem_10rem_10rem_minmax(8.5rem,auto)]'>
           <form
-            className='relative'
+            className='relative min-w-0 sm:col-span-2 lg:col-span-1'
             onSubmit={(event) => {
               event.preventDefault()
               updateSearch({ q: query.trim() || undefined })
             }}
           >
-            <Search className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--sea-ink-soft)]' />
+            <Search className='pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[var(--sea-ink-soft)]' />
             <Input
-              className='h-10 bg-[var(--surface-muted)] pl-10'
+              className='h-11 rounded-md bg-[var(--surface-muted)] pl-11'
               onChange={(event) => setQuery(event.target.value)}
               placeholder='搜索标题、专辑、机构'
               type='search'
@@ -164,7 +164,7 @@ function ImagesPage() {
             }}
             value={search.sort}
           >
-            <SelectTrigger className='h-10 bg-[var(--surface-muted)]'>
+            <SelectTrigger className='!h-11 w-full rounded-md bg-[var(--surface-muted)]'>
               <SelectValue placeholder='排序' />
             </SelectTrigger>
             <SelectContent>
@@ -185,7 +185,7 @@ function ImagesPage() {
             }
             value={search.tagId ?? ALL_VALUE}
           >
-            <SelectTrigger className='h-10 bg-[var(--surface-muted)]'>
+            <SelectTrigger className='!h-11 w-full rounded-md bg-[var(--surface-muted)]'>
               <SelectValue placeholder='标签' />
             </SelectTrigger>
             <SelectContent>
@@ -212,7 +212,7 @@ function ImagesPage() {
             }
             value={search.modelId ?? ALL_VALUE}
           >
-            <SelectTrigger className='h-10 bg-[var(--surface-muted)]'>
+            <SelectTrigger className='!h-11 w-full rounded-md bg-[var(--surface-muted)]'>
               <SelectValue placeholder='人物' />
             </SelectTrigger>
             <SelectContent>
@@ -227,7 +227,7 @@ function ImagesPage() {
             </SelectContent>
           </Select>
           <Button
-            className='h-10'
+            className='h-11 w-full rounded-md'
             onClick={() =>
               updateSearch({
                 seed: randomSeed(),

@@ -57,9 +57,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <ScriptOnce>{THEME_INIT_SCRIPT}</ScriptOnce>
         <HeadContent />
       </head>
-      <body className='font-sans antialiased wrap-anywhere selection:bg-[rgba(79,184,178,0.24)]'>
+      <body className='flex min-h-svh flex-col font-sans antialiased wrap-anywhere selection:bg-[rgba(79,184,178,0.24)]'>
         {!isAdminRoute && <Header />}
-        {children}
+        <div className={isAdminRoute ? 'contents' : 'flex flex-1 flex-col'}>
+          {children}
+        </div>
         {!isAdminRoute && <Footer />}
         <TanStackDevtools
           config={{

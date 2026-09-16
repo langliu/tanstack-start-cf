@@ -11,7 +11,7 @@ export default function Footer() {
   const year = new Date().getFullYear()
 
   return (
-    <footer className='site-footer mt-20 px-4 pb-14 pt-10 text-[var(--sea-ink-soft)]'>
+    <footer className='site-footer px-4 pb-14 pt-10 text-[var(--sea-ink-soft)]'>
       <div className='page-wrap flex flex-col justify-between gap-6 sm:flex-row sm:items-center'>
         <div>
           <p className='m-0 font-semibold text-[var(--sea-ink)]'>
