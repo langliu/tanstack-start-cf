@@ -3,19 +3,27 @@ import { compareItems, rankItem } from '@tanstack/match-sorter-utils'
 import { createFileRoute } from '@tanstack/react-router'
 import type {
   Column,
-  ColumnDef,
   ColumnFiltersState,
   FilterFn,
-  SortingFn,
+  SortFn,
+  TableFeatures,
 } from '@tanstack/react-table'
 import {
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  sortingFns,
-  useReactTable,
+  columnFilteringFeature,
+  columnVisibilityFeature,
+  createColumnHelper,
+  createFilteredRowModel,
+  createPaginatedRowModel,
+  createSortedRowModel,
+  filterFn_equalsString,
+  filterFn_includesString,
+  filterFn_includesStringSensitive,
+  globalFilteringFeature,
+  rowPaginationFeature,
+  rowSortingFeature,
+  sortFn_alphanumeric,
+  tableFeatures,
+  useTable,
 } from '@tanstack/react-table'
 import React from 'react'
 import {
@@ -40,21 +48,23 @@ const PAGE_SIZE_ITEMS = PAGE_SIZE_OPTIONS.map((pageSize) => ({
 }))
 
 declare module '@tanstack/react-table' {
-  interface FilterFns {
-    fuzzy: FilterFn<unknown>
-  }
   interface FilterMeta {
     itemRank: RankingInfo
   }
 }
 
 // Define a custom fuzzy filter function that will apply ranking info to rows (using match-sorter utils)
-const fuzzyFilter: FilterFn<Person> = (row, columnId, value, addMeta) => {
+const fuzzyFilter: FilterFn<TableFeatures, Person> = (
+  row,
+  columnId,
+  value,
+  addMeta,
+) => {
   // Rank the item
   const itemRank = rankItem(row.getValue(columnId), value)
 
   // Store the itemRank info
-  addMeta({
+  addMeta?.({
     itemRank,
   })
 
@@ -63,19 +73,70 @@ const fuzzyFilter: FilterFn<Person> = (row, columnId, value, addMeta) => {
 }
 
 // Define a custom fuzzy sort function that will sort by rank if the row has ranking information
-const fuzzySort: SortingFn<Person> = (rowA, rowB, columnId) => {
+const fuzzySort: SortFn<TableFeatures, Person> = (rowA, rowB, columnId) => {
   let dir = 0
 
   // Only sort by rank if the column has ranking information
-  const rowARank = rowA.columnFiltersMeta[columnId]?.itemRank
-  const rowBRank = rowB.columnFiltersMeta[columnId]?.itemRank
+  const rowARank = (
+    rowA.columnFiltersMeta[columnId] as { itemRank?: RankingInfo } | undefined
+  )?.itemRank
+  const rowBRank = (
+    rowB.columnFiltersMeta[columnId] as { itemRank?: RankingInfo } | undefined
+  )?.itemRank
   if (rowARank && rowBRank) {
     dir = compareItems(rowARank, rowBRank)
   }
 
   // Provide an alphanumeric fallback for when the item ranks are equal
-  return dir === 0 ? sortingFns.alphanumeric(rowA, rowB, columnId) : dir
+  return dir === 0 ? sortFn_alphanumeric(rowA, rowB, columnId) : dir
 }
+
+const features = tableFeatures({
+  columnFilteringFeature,
+  columnVisibilityFeature,
+  filteredRowModel: createFilteredRowModel(),
+  filterFns: {
+    equalsString: filterFn_equalsString,
+    fuzzy: fuzzyFilter,
+    includesString: filterFn_includesString,
+    includesStringSensitive: filterFn_includesStringSensitive,
+  },
+  filterMeta: {} as { itemRank: RankingInfo },
+  globalFilteringFeature,
+  paginatedRowModel: createPaginatedRowModel(),
+  rowPaginationFeature,
+  rowSortingFeature,
+  sortedRowModel: createSortedRowModel(),
+  sortFns: {
+    alphanumeric: sortFn_alphanumeric,
+    fuzzy: fuzzySort,
+  },
+})
+
+const columnHelper = createColumnHelper<typeof features, Person>()
+
+const columns = columnHelper.columns([
+  columnHelper.accessor('id', {
+    filterFn: 'equalsString', // note: normal non-fuzzy filter column - exact match required
+  }),
+  columnHelper.accessor('firstName', {
+    cell: (info) => info.getValue(),
+    filterFn: 'includesStringSensitive', // note: normal non-fuzzy filter column - case sensitive
+  }),
+  columnHelper.accessor((row) => row.lastName, {
+    cell: (info) => info.getValue(),
+    filterFn: 'includesString', // note: normal non-fuzzy filter column - case insensitive
+    header: () => <span>Last Name</span>,
+    id: 'lastName',
+  }),
+  columnHelper.accessor((row) => `${row.firstName} ${row.lastName}`, {
+    cell: (info) => info.getValue(),
+    filterFn: 'fuzzy', // using our custom fuzzy filter function
+    header: 'Full Name',
+    id: 'fullName',
+    sortFn: 'fuzzy', // sort by fuzzy rank (falls back to alphanumeric)
+  }),
+])
 
 function TableDemo() {
   const rerender = React.useReducer(() => ({}), {})[1]
@@ -85,54 +146,14 @@ function TableDemo() {
   )
   const [globalFilter, setGlobalFilter] = React.useState('')
 
-  const columns = React.useMemo<ColumnDef<Person, unknown>[]>(
-    () => [
-      {
-        accessorKey: 'id',
-        filterFn: 'equalsString', //note: normal non-fuzzy filter column - exact match required
-      },
-      {
-        accessorKey: 'firstName',
-        cell: (info) => info.getValue(),
-        filterFn: 'includesStringSensitive', //note: normal non-fuzzy filter column - case sensitive
-      },
-      {
-        accessorFn: (row) => row.lastName,
-        cell: (info) => info.getValue(),
-        filterFn: 'includesString', //note: normal non-fuzzy filter column - case insensitive
-        header: () => <span>Last Name</span>,
-        id: 'lastName',
-      },
-      {
-        accessorFn: (row) => `${row.firstName} ${row.lastName}`,
-        cell: (info) => info.getValue(),
-        filterFn: 'fuzzy', //using our custom fuzzy filter function
-        header: 'Full Name',
-        id: 'fullName',
-        // filterFn: fuzzyFilter, //or just define with the function
-        sortingFn: fuzzySort, //sort by fuzzy rank (falls back to alphanumeric)
-      },
-    ],
-    [],
-  )
-
   const [data, setData] = React.useState<Person[]>(() => makeData(5_000))
-  const refreshData = () => setData((_old) => makeData(50_000)) //stress test
+  const refreshData = () => setData((_old) => makeData(50_000)) // stress test
 
-  const table = useReactTable({
+  const table = useTable({
     columns,
     data,
-    debugColumns: false,
-    debugHeaders: true,
-    debugTable: true,
-    filterFns: {
-      fuzzy: fuzzyFilter, //define as a filter function that can be used in column definitions
-    },
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(), //client side filtering
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    globalFilterFn: 'fuzzy', //apply fuzzy filter to the global filter (most common use case for fuzzy filter)
+    features,
+    globalFilterFn: 'fuzzy', // apply fuzzy filter to the global filter (most common use case for fuzzy filter)
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
     state: {
@@ -141,10 +162,10 @@ function TableDemo() {
     },
   })
 
-  const filteredColumnId = table.getState().columnFilters[0]?.id
-  const sortedColumnId = table.getState().sorting[0]?.id
+  const filteredColumnId = table.state.columnFilters[0]?.id
+  const sortedColumnId = table.state.sorting[0]?.id
 
-  //apply the fuzzy sort if the fullName column is being filtered
+  // apply the fuzzy sort if the fullName column is being filtered
   React.useEffect(() => {
     if (filteredColumnId === 'fullName') {
       if (sortedColumnId !== 'fullName') {
@@ -186,10 +207,7 @@ function TableDemo() {
                               onClick: header.column.getToggleSortingHandler(),
                             }}
                           >
-                            {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
+                            <table.FlexRender header={header} />
                             {{
                               asc: ' 🔼',
                               desc: ' 🔽',
@@ -218,10 +236,7 @@ function TableDemo() {
                   {row.getVisibleCells().map((cell) => {
                     return (
                       <td className='px-4 py-3' key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
+                        <table.FlexRender cell={cell} />
                       </td>
                     )
                   })}
@@ -236,7 +251,7 @@ function TableDemo() {
         <button
           className='px-3 py-1 bg-gray-800 rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
           disabled={!table.getCanPreviousPage()}
-          onClick={() => table.setPageIndex(0)}
+          onClick={() => table.firstPage()}
           type='button'
         >
           {'<<'}
@@ -260,7 +275,7 @@ function TableDemo() {
         <button
           className='px-3 py-1 bg-gray-800 rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
           disabled={!table.getCanNextPage()}
-          onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+          onClick={() => table.lastPage()}
           type='button'
         >
           {'>>'}
@@ -268,15 +283,14 @@ function TableDemo() {
         <span className='flex items-center gap-1'>
           <div>Page</div>
           <strong>
-            {table.getState().pagination.pageIndex + 1} of{' '}
-            {table.getPageCount()}
+            {table.state.pagination.pageIndex + 1} of {table.getPageCount()}
           </strong>
         </span>
         <span className='flex items-center gap-1'>
           | Go to page:
           <input
             className='w-16 px-2 py-1 bg-gray-800 rounded-md border border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none'
-            defaultValue={table.getState().pagination.pageIndex + 1}
+            defaultValue={table.state.pagination.pageIndex + 1}
             onChange={(e) => {
               const page = e.target.value ? Number(e.target.value) - 1 : 0
               table.setPageIndex(page)
@@ -289,7 +303,7 @@ function TableDemo() {
           onValueChange={(value) => {
             table.setPageSize(Number(value))
           }}
-          value={String(table.getState().pagination.pageSize)}
+          value={String(table.state.pagination.pageSize)}
         >
           <SelectTrigger className='h-8 w-28 border-gray-700 bg-gray-800 text-white focus-visible:ring-blue-500'>
             <SelectValue />
@@ -306,7 +320,7 @@ function TableDemo() {
         </Select>
       </div>
       <div className='mt-4 text-gray-400'>
-        {table.getPrePaginationRowModel().rows.length} Rows
+        {table.getPrePaginatedRowModel().rows.length} Rows
       </div>
       <div className='mt-4 flex gap-2'>
         <button
@@ -327,8 +341,8 @@ function TableDemo() {
       <pre className='mt-4 p-4 bg-gray-800 rounded-lg text-gray-300 overflow-auto'>
         {JSON.stringify(
           {
-            columnFilters: table.getState().columnFilters,
-            globalFilter: table.getState().globalFilter,
+            columnFilters: table.state.columnFilters,
+            globalFilter: table.state.globalFilter,
           },
           null,
           2,
@@ -338,14 +352,14 @@ function TableDemo() {
   )
 }
 
-function Filter({ column }: { column: Column<Person, unknown> }) {
+function Filter({ column }: { column: Column<typeof features, Person> }) {
   const columnFilterValue = column.getFilterValue()
 
   return (
     <DebouncedInput
       className='w-full px-2 py-1 bg-gray-700 text-white rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none'
       onChange={(value) => column.setFilterValue(value)}
-      placeholder={`Search...`}
+      placeholder='Search...'
       type='text'
       value={(columnFilterValue ?? '') as string}
     />
