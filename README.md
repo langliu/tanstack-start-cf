@@ -1,258 +1,168 @@
-Welcome to your new TanStack Start app! 
+# Kite
 
-# Getting Started
+A modern, high-performance full-stack media gallery and management system built with **TanStack Start**, **React 19**, **Drizzle ORM**, and **ORPC**.
 
-To run this application:
+---
+
+## Features
+
+### Public Showcase
+
+- **Virtualized Masonry Grid**: Smooth, infinite-scrolling image waterfall powered by `masonic` with responsive column layouts.
+- **Faceted Search & Filtering**: Multi-dimensional filtering by models, tags, agencies, and albums with real-time keyword search.
+- **Flexible Sorting**: Sort by latest additions, popularity (top), or randomize exploration with reproducible seeds.
+- **Albums & Collections**: Dedicated album browsing (`/albums`) and contextual album detail views (`/albums/$albumSlug`).
+- **Interactive Lightbox & Dialogs**: Fast image inspection modal with dominant color placeholders, metadata badges, and deep links.
+
+### Admin Management (`/admin`)
+
+- **Media Library**: Comprehensive asset management powered by TanStack Table v9 with batch selection, pagination, status toggling, and quick editing.
+- **Model Directory**: Manage model profiles, aliases, bios, and image associations.
+- **Taxonomy & Tags**: Color-coded tag management with custom slugs and categorization.
+- **Agencies & Albums**: Group assets into agencies and curated album collections.
+- **Direct Object Storage (OSS)**: Secure asset management with presigned V4 URL uploads and storage integration.
+
+---
+
+## Tech Stack
+
+| Category             | Technology                                                                                                                               |
+| :------------------- | :--------------------------------------------------------------------------------------------------------------------------------------- |
+| **Framework**        | [TanStack Start](https://tanstack.com/start) (Full-stack React 19 SSR, React Compiler)                                                   |
+| **Routing**          | [TanStack Router](https://tanstack.com/router) (Type-safe file-based routing)                                                            |
+| **Data Fetching**    | [TanStack Query v5](https://tanstack.com/query) & `@orpc/tanstack-query`                                                                 |
+| **API & RPC**        | [oRPC](https://orpc.unnoq.com/) (End-to-end type-safe RPC, OpenAPI & JSON-Schema)                                                        |
+| **Database & ORM**   | [Neon](https://neon.tech/) (Serverless PostgreSQL) + [Drizzle ORM](https://orm.drizzle.team/)                                            |
+| **Authentication**   | [Better Auth](https://www.better-auth.com/) (Drizzle adapter, session management)                                                        |
+| **Styling & UI**     | [Tailwind CSS v4](https://tailwindcss.com/), [Base UI](https://base-ui.com/), [Lucide React](https://lucide.dev/)                        |
+| **Tooling & Linter** | [Biome](https://biomejs.dev/), [Vite 8](https://vite.dev/), [Vitest](https://vitest.dev/), [TypeScript](https://www.typescriptlang.org/) |
+
+---
+
+## Project Structure
+
+```text
+src/
+├── components/          # Reusable UI components (Base UI, layout, gallery masonry)
+│   ├── admin/           # Admin dashboard tables, forms, and dialogs
+│   ├── public/          # Public-facing gallery components
+│   └── ui/              # Base UI design primitives
+├── db/                  # Database configuration & schemas
+│   ├── auth-schema.ts   # Better Auth tables (user, session, account, verification)
+│   ├── index.ts         # Neon serverless client & Drizzle connection
+│   └── schema.ts        # Business schemas (images, models, tags, albums, agencies)
+├── lib/                 # Utility functions, auth client, query client setup
+├── orpc/                # End-to-end type-safe RPC routes & contracts
+│   ├── client.ts        # Client-side oRPC caller integrated with TanStack Query
+│   └── router/          # Backend procedures (public gallery, admin CRUD)
+├── routes/              # TanStack Router file-based routes
+│   ├── __root.tsx       # Root layout & providers
+│   ├── index.tsx        # Landing page
+│   ├── images.tsx       # Public image waterfall
+│   ├── albums/          # Album directory & album slug pages
+│   ├── admin/           # Admin dashboard routes (library, models, tags, etc.)
+│   └── api/             # Auth endpoints and oRPC server handlers
+└── server/              # Server-only utilities (Aliyun OSS presigned URLs, auth)
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- **Node.js**: `24.x` (or `>= 22.12.0`)
+- **Package Manager**: `pnpm` `12.x`
+
+### 1. Installation
 
 ```bash
 pnpm install
+```
+
+### 2. Environment Variables
+
+Create a `.env.local` file in the project root:
+
+```ini
+# Database
+DATABASE_URL="postgresql://user:password@ep-xyz.region.aws.neon.tech/neondb?sslmode=require"
+
+# Authentication
+BETTER_AUTH_SECRET="your-secure-random-secret"
+BETTER_AUTH_URL="http://localhost:3000"
+
+# Aliyun OSS (Object Storage)
+OSS_ACCESS_KEY_ID="your-access-key-id"
+OSS_ACCESS_KEY_SECRET="your-access-key-secret"
+OSS_BUCKET="your-bucket-name"
+OSS_ENDPOINT="oss-cn-hangzhou.aliyuncs.com"
+OSS_REGION="oss-cn-hangzhou"
+```
+
+> **Tip**: Generate a secure auth secret via:
+>
+> ```bash
+> pnpm dlx @better-auth/cli secret
+> ```
+
+### 3. Database Migration
+
+Push or migrate schemas to your PostgreSQL database:
+
+```bash
+# Push schema directly to database
+pnpm db:push
+
+# Or generate and run migrations
+pnpm db:generate
+pnpm db:migrate
+
+# Open Drizzle Studio to inspect data
+pnpm db:studio
+```
+
+### 4. Development Server
+
+Start the local Vite development server:
+
+```bash
 pnpm dev
 ```
 
-# Building For Production
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-To build this application for production:
+---
 
-```bash
-pnpm build
-```
+## Available Scripts
 
-## Testing
+| Command                  | Description                                            |
+| :----------------------- | :----------------------------------------------------- |
+| `pnpm dev`               | Start development server on port 3000                  |
+| `pnpm build`             | Build the full-stack application for production        |
+| `pnpm preview`           | Preview production build locally                       |
+| `pnpm test`              | Run test suite with Vitest                             |
+| `pnpm lint`              | Lint code with Biome                                   |
+| `pnpm format`            | Format code with Biome                                 |
+| `pnpm check`             | Run Biome lint, format, and import organization checks |
+| `pnpm db:push`           | Push Drizzle schema changes directly to the database   |
+| `pnpm db:migrate`        | Run pending Drizzle migrations                         |
+| `pnpm db:generate`       | Generate migration SQL files from schema               |
+| `pnpm db:studio`         | Launch Drizzle Studio Web UI                           |
+| `pnpm deploy:staging`    | Build and deploy staging release to Vercel             |
+| `pnpm deploy:production` | Build and deploy production release to Vercel          |
 
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+---
 
-```bash
-pnpm test
-```
+## Deployment
 
-## Styling
+The project is configured for deployment to **Vercel** or **Cloudflare Workers**:
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+- **Vercel**: Deployments are automated via `pnpm deploy:production` or connected Git integrations.
+- Ensure all required environment variables (`DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `OSS_*`) are configured in your hosting platform dashboard.
 
-### Removing Tailwind CSS
+---
 
-If you prefer not to use Tailwind CSS:
+## License
 
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Uninstall the packages: `pnpm remove @tailwindcss/vite tailwindcss`
-
-## Linting & Formatting
-
-This project uses [Biome](https://biomejs.dev/) for linting and formatting. The following scripts are available:
-
-
-```bash
-pnpm lint
-pnpm format
-pnpm check
-```
-
-
-## Deploy to Cloudflare Workers
-
-This project uses the Cloudflare Vite plugin (configured in `vite.config.ts`) and `wrangler.jsonc`:
-
-1. Install Wrangler: `npm install -g wrangler`
-2. Authenticate: `wrangler login`
-3. Deploy: `npx wrangler deploy`
-
-For production env vars, run `wrangler secret put MY_VAR` for each secret listed in `.env.example`. Public (non-secret) vars go in `wrangler.jsonc` under `vars`.
-
-
-## Shadcn
-
-Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
-
-```bash
-pnpm dlx shadcn@latest add button
-```
-
-
-## Setting up Better Auth
-
-1. Generate and set the `BETTER_AUTH_SECRET` environment variable in your `.env.local`:
-
-   ```bash
-   pnpm dlx @better-auth/cli secret
-   ```
-
-2. Visit the [Better Auth documentation](https://www.better-auth.com) to unlock the full potential of authentication in your app.
-
-### Adding a Database (Optional)
-
-Better Auth can work in stateless mode, but to persist user data, add a database:
-
-```typescript
-// src/lib/auth.ts
-import { betterAuth } from "better-auth";
-import { Pool } from "pg";
-
-export const auth = betterAuth({
-  database: new Pool({
-    connectionString: process.env.DATABASE_URL,
-  }),
-  // ... rest of config
-});
-```
-
-Then run migrations:
-
-```bash
-pnpm dlx @better-auth/cli migrate
-```
-
-
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+Private repository. All rights reserved.
