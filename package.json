@@ -80,7 +80,7 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
     "babel-plugin-react-compiler": "^1.0.0",
-    "dotenv": "^17.4.2",
+    "dotenv": "^18.0.0",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2",
     "vercel": "^59.19.0",
