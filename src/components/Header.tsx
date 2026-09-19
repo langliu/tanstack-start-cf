@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { Images, LockKeyhole } from 'lucide-react'
+import { LockKeyhole } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 
 const navItems = [
@@ -15,10 +15,14 @@ export default function Header() {
     <header className='sticky top-0 z-50 border-(--line) border-b bg-(--header-bg) px-4 backdrop-blur-lg'>
       <nav className='page-wrap flex flex-wrap items-center gap-x-4 gap-y-3 py-3'>
         <Link
-          className='brand-link shrink-0 rounded-md border border-(--chip-line) bg-(--chip-bg) px-3 py-2 font-semibold text-(--sea-ink) text-sm no-underline shadow-[0_8px_24px_rgba(27,34,46,0.08)]'
+          className='brand-link shrink-0 items-center gap-2.5 rounded-md border border-(--chip-line) bg-(--chip-bg) px-3 py-1.5 font-semibold text-(--sea-ink) text-sm no-underline shadow-[0_8px_24px_rgba(27,34,46,0.08)]'
           to='/'
         >
-          <Images aria-hidden='true' />
+          <img
+            alt='Kite Logo'
+            className='size-5 rounded-sm object-cover'
+            src='/logo192.png'
+          />
           Kite Gallery
         </Link>
 
