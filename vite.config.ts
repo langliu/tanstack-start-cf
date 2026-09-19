@@ -7,7 +7,12 @@ import { defineConfig } from 'vite'
 
 const config = defineConfig(({ command }) => ({
   optimizeDeps: {
-    exclude: ['@better-auth/drizzle-adapter', 'better-auth/adapters/drizzle'],
+    exclude: [
+      '@better-auth/core',
+      '@better-auth/drizzle-adapter',
+      'better-auth',
+      'better-auth/adapters/drizzle',
+    ],
   },
   plugins: [
     devtools(),

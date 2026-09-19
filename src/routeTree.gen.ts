@@ -9,55 +9,45 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ImagesRouteImport } from './routes/images'
-import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AlbumsIndexRouteImport } from './routes/albums/index'
+import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as ImagesRouteImport } from './routes/images'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
-import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
-import { Route as DemoTableRouteImport } from './routes/demo/table'
-import { Route as DemoOrpcTodoRouteImport } from './routes/demo/orpc-todo'
-import { Route as DemoDrizzleRouteImport } from './routes/demo/drizzle'
-import { Route as DemoBetterAuthRouteImport } from './routes/demo/better-auth'
-import { Route as ApiSplatRouteImport } from './routes/api.$'
-import { Route as AlbumsAlbumSlugRouteImport } from './routes/albums/$albumSlug'
-import { Route as AdminTrashRouteImport } from './routes/admin/trash'
-import { Route as AdminTagsRouteImport } from './routes/admin/tags'
-import { Route as AdminModelsRouteImport } from './routes/admin/models'
 import { Route as AdminAgenciesRouteImport } from './routes/admin/agencies'
 import { Route as AdminAlbumsRouteRouteImport } from './routes/admin/albums/route'
+import { Route as AdminModelsRouteImport } from './routes/admin/models'
+import { Route as AdminTagsRouteImport } from './routes/admin/tags'
+import { Route as AdminTrashRouteImport } from './routes/admin/trash'
+import { Route as AlbumsIndexRouteImport } from './routes/albums/index'
+import { Route as AlbumsAlbumSlugRouteImport } from './routes/albums/$albumSlug'
+import { Route as ApiSplatRouteImport } from './routes/api.$'
+import { Route as DemoBetterAuthRouteImport } from './routes/demo/better-auth'
+import { Route as DemoDrizzleRouteImport } from './routes/demo/drizzle'
+import { Route as DemoOrpcTodoRouteImport } from './routes/demo/orpc-todo'
+import { Route as DemoTableRouteImport } from './routes/demo/table'
+import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as AdminAlbumsIndexRouteImport } from './routes/admin/albums/index'
-import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
-import { Route as DemoFormAddressRouteImport } from './routes/demo/form.address'
-import { Route as ApiRpcSplatRouteImport } from './routes/api.rpc.$'
-import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as ApiAssetsSplatRouteImport } from './routes/api/assets/$'
 import { Route as AdminAlbumsAlbumIdRouteImport } from './routes/admin/albums/$albumId'
+import { Route as ApiAssetsSplatRouteImport } from './routes/api/assets/$'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiRpcSplatRouteImport } from './routes/api.rpc.$'
+import { Route as DemoFormAddressRouteImport } from './routes/demo/form.address'
+import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
 import { Route as ApiAdminImagesUploadRouteImport } from './routes/api/admin/images/upload'
-import { Route as ApiAdminModelsAvatarUploadRouteImport } from './routes/api/admin/models/avatar/upload'
-import { Route as ApiAdminModelsAvatarDeleteRouteImport } from './routes/api/admin/models/avatar/delete'
-import { Route as ApiAdminImagesUploadPrepareRouteImport } from './routes/api/admin/images/upload/prepare'
-import { Route as ApiAdminImagesUploadCompleteRouteImport } from './routes/api/admin/images/upload/complete'
 import { Route as ApiAdminImagesUploadCancelRouteImport } from './routes/api/admin/images/upload/cancel'
-import { Route as ApiAdminModelsAvatarUploadPrepareRouteImport } from './routes/api/admin/models/avatar/upload/prepare'
+import { Route as ApiAdminImagesUploadCompleteRouteImport } from './routes/api/admin/images/upload/complete'
+import { Route as ApiAdminImagesUploadPrepareRouteImport } from './routes/api/admin/images/upload/prepare'
+import { Route as ApiAdminModelsAvatarDeleteRouteImport } from './routes/api/admin/models/avatar/delete'
+import { Route as ApiAdminModelsAvatarUploadRouteImport } from './routes/api/admin/models/avatar/upload'
 import { Route as ApiAdminModelsAvatarUploadCompleteRouteImport } from './routes/api/admin/models/avatar/upload/complete'
+import { Route as ApiAdminModelsAvatarUploadPrepareRouteImport } from './routes/api/admin/models/avatar/upload/prepare'
 
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ImagesRoute = ImagesRouteImport.update({
-  id: '/images',
-  path: '/images',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ExploreRoute = ExploreRouteImport.update({
-  id: '/explore',
-  path: '/explore',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -70,69 +60,24 @@ const AdminRouteRoute = AdminRouteRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AlbumsIndexRoute = AlbumsIndexRouteImport.update({
-  id: '/albums/',
-  path: '/albums/',
+const ImagesRoute = ImagesRouteImport.update({
+  id: '/images',
+  path: '/images',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
-const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
-  id: '/demo/tanstack-query',
-  path: '/demo/tanstack-query',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoTableRoute = DemoTableRouteImport.update({
-  id: '/demo/table',
-  path: '/demo/table',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoOrpcTodoRoute = DemoOrpcTodoRouteImport.update({
-  id: '/demo/orpc-todo',
-  path: '/demo/orpc-todo',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoDrizzleRoute = DemoDrizzleRouteImport.update({
-  id: '/demo/drizzle',
-  path: '/demo/drizzle',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoBetterAuthRoute = DemoBetterAuthRouteImport.update({
-  id: '/demo/better-auth',
-  path: '/demo/better-auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiSplatRoute = ApiSplatRouteImport.update({
-  id: '/api/$',
-  path: '/api/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AlbumsAlbumSlugRoute = AlbumsAlbumSlugRouteImport.update({
-  id: '/albums/$albumSlug',
-  path: '/albums/$albumSlug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminTrashRoute = AdminTrashRouteImport.update({
-  id: '/trash',
-  path: '/trash',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
-const AdminTagsRoute = AdminTagsRouteImport.update({
-  id: '/tags',
-  path: '/tags',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
-const AdminModelsRoute = AdminModelsRouteImport.update({
-  id: '/models',
-  path: '/models',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminAgenciesRoute = AdminAgenciesRouteImport.update({
@@ -145,24 +90,74 @@ const AdminAlbumsRouteRoute = AdminAlbumsRouteRouteImport.update({
   path: '/albums',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminModelsRoute = AdminModelsRouteImport.update({
+  id: '/models',
+  path: '/models',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminTagsRoute = AdminTagsRouteImport.update({
+  id: '/tags',
+  path: '/tags',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminTrashRoute = AdminTrashRouteImport.update({
+  id: '/trash',
+  path: '/trash',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AlbumsIndexRoute = AlbumsIndexRouteImport.update({
+  id: '/albums/',
+  path: '/albums/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AlbumsAlbumSlugRoute = AlbumsAlbumSlugRouteImport.update({
+  id: '/albums/$albumSlug',
+  path: '/albums/$albumSlug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSplatRoute = ApiSplatRouteImport.update({
+  id: '/api/$',
+  path: '/api/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoBetterAuthRoute = DemoBetterAuthRouteImport.update({
+  id: '/demo/better-auth',
+  path: '/demo/better-auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoDrizzleRoute = DemoDrizzleRouteImport.update({
+  id: '/demo/drizzle',
+  path: '/demo/drizzle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoOrpcTodoRoute = DemoOrpcTodoRouteImport.update({
+  id: '/demo/orpc-todo',
+  path: '/demo/orpc-todo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoTableRoute = DemoTableRouteImport.update({
+  id: '/demo/table',
+  path: '/demo/table',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
+  id: '/demo/tanstack-query',
+  path: '/demo/tanstack-query',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminAlbumsIndexRoute = AdminAlbumsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminAlbumsRouteRoute,
 } as any)
-const DemoFormSimpleRoute = DemoFormSimpleRouteImport.update({
-  id: '/demo/form/simple',
-  path: '/demo/form/simple',
-  getParentRoute: () => rootRouteImport,
+const AdminAlbumsAlbumIdRoute = AdminAlbumsAlbumIdRouteImport.update({
+  id: '/$albumId',
+  path: '/$albumId',
+  getParentRoute: () => AdminAlbumsRouteRoute,
 } as any)
-const DemoFormAddressRoute = DemoFormAddressRouteImport.update({
-  id: '/demo/form/address',
-  path: '/demo/form/address',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiRpcSplatRoute = ApiRpcSplatRouteImport.update({
-  id: '/api/rpc/$',
-  path: '/api/rpc/$',
+const ApiAssetsSplatRoute = ApiAssetsSplatRouteImport.update({
+  id: '/api/assets/$',
+  path: '/api/assets/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -170,37 +165,30 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAssetsSplatRoute = ApiAssetsSplatRouteImport.update({
-  id: '/api/assets/$',
-  path: '/api/assets/$',
+const ApiRpcSplatRoute = ApiRpcSplatRouteImport.update({
+  id: '/api/rpc/$',
+  path: '/api/rpc/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminAlbumsAlbumIdRoute = AdminAlbumsAlbumIdRouteImport.update({
-  id: '/$albumId',
-  path: '/$albumId',
-  getParentRoute: () => AdminAlbumsRouteRoute,
+const DemoFormAddressRoute = DemoFormAddressRouteImport.update({
+  id: '/demo/form/address',
+  path: '/demo/form/address',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoFormSimpleRoute = DemoFormSimpleRouteImport.update({
+  id: '/demo/form/simple',
+  path: '/demo/form/simple',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAdminImagesUploadRoute = ApiAdminImagesUploadRouteImport.update({
   id: '/api/admin/images/upload',
   path: '/api/admin/images/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAdminModelsAvatarUploadRoute =
-  ApiAdminModelsAvatarUploadRouteImport.update({
-    id: '/api/admin/models/avatar/upload',
-    path: '/api/admin/models/avatar/upload',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiAdminModelsAvatarDeleteRoute =
-  ApiAdminModelsAvatarDeleteRouteImport.update({
-    id: '/api/admin/models/avatar/delete',
-    path: '/api/admin/models/avatar/delete',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiAdminImagesUploadPrepareRoute =
-  ApiAdminImagesUploadPrepareRouteImport.update({
-    id: '/prepare',
-    path: '/prepare',
+const ApiAdminImagesUploadCancelRoute =
+  ApiAdminImagesUploadCancelRouteImport.update({
+    id: '/cancel',
+    path: '/cancel',
     getParentRoute: () => ApiAdminImagesUploadRoute,
   } as any)
 const ApiAdminImagesUploadCompleteRoute =
@@ -209,22 +197,34 @@ const ApiAdminImagesUploadCompleteRoute =
     path: '/complete',
     getParentRoute: () => ApiAdminImagesUploadRoute,
   } as any)
-const ApiAdminImagesUploadCancelRoute =
-  ApiAdminImagesUploadCancelRouteImport.update({
-    id: '/cancel',
-    path: '/cancel',
-    getParentRoute: () => ApiAdminImagesUploadRoute,
-  } as any)
-const ApiAdminModelsAvatarUploadPrepareRoute =
-  ApiAdminModelsAvatarUploadPrepareRouteImport.update({
+const ApiAdminImagesUploadPrepareRoute =
+  ApiAdminImagesUploadPrepareRouteImport.update({
     id: '/prepare',
     path: '/prepare',
-    getParentRoute: () => ApiAdminModelsAvatarUploadRoute,
+    getParentRoute: () => ApiAdminImagesUploadRoute,
+  } as any)
+const ApiAdminModelsAvatarDeleteRoute =
+  ApiAdminModelsAvatarDeleteRouteImport.update({
+    id: '/api/admin/models/avatar/delete',
+    path: '/api/admin/models/avatar/delete',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiAdminModelsAvatarUploadRoute =
+  ApiAdminModelsAvatarUploadRouteImport.update({
+    id: '/api/admin/models/avatar/upload',
+    path: '/api/admin/models/avatar/upload',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const ApiAdminModelsAvatarUploadCompleteRoute =
   ApiAdminModelsAvatarUploadCompleteRouteImport.update({
     id: '/complete',
     path: '/complete',
+    getParentRoute: () => ApiAdminModelsAvatarUploadRoute,
+  } as any)
+const ApiAdminModelsAvatarUploadPrepareRoute =
+  ApiAdminModelsAvatarUploadPrepareRouteImport.update({
+    id: '/prepare',
+    path: '/prepare',
     getParentRoute: () => ApiAdminModelsAvatarUploadRoute,
   } as any)
 
@@ -477,25 +477,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/images': {
-      id: '/images'
-      path: '/images'
-      fullPath: '/images'
-      preLoaderRoute: typeof ImagesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/explore': {
-      id: '/explore'
-      path: '/explore'
-      fullPath: '/explore'
-      preLoaderRoute: typeof ExploreRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -512,18 +498,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/albums/': {
-      id: '/albums/'
-      path: '/albums'
-      fullPath: '/albums/'
-      preLoaderRoute: typeof AlbumsIndexRouteImport
+    '/images': {
+      id: '/images'
+      path: '/images'
+      fullPath: '/images'
+      preLoaderRoute: typeof ImagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -531,76 +524,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
-    '/demo/tanstack-query': {
-      id: '/demo/tanstack-query'
-      path: '/demo/tanstack-query'
-      fullPath: '/demo/tanstack-query'
-      preLoaderRoute: typeof DemoTanstackQueryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/table': {
-      id: '/demo/table'
-      path: '/demo/table'
-      fullPath: '/demo/table'
-      preLoaderRoute: typeof DemoTableRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/orpc-todo': {
-      id: '/demo/orpc-todo'
-      path: '/demo/orpc-todo'
-      fullPath: '/demo/orpc-todo'
-      preLoaderRoute: typeof DemoOrpcTodoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/drizzle': {
-      id: '/demo/drizzle'
-      path: '/demo/drizzle'
-      fullPath: '/demo/drizzle'
-      preLoaderRoute: typeof DemoDrizzleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/better-auth': {
-      id: '/demo/better-auth'
-      path: '/demo/better-auth'
-      fullPath: '/demo/better-auth'
-      preLoaderRoute: typeof DemoBetterAuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/$': {
-      id: '/api/$'
-      path: '/api/$'
-      fullPath: '/api/$'
-      preLoaderRoute: typeof ApiSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/albums/$albumSlug': {
-      id: '/albums/$albumSlug'
-      path: '/albums/$albumSlug'
-      fullPath: '/albums/$albumSlug'
-      preLoaderRoute: typeof AlbumsAlbumSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/trash': {
-      id: '/admin/trash'
-      path: '/trash'
-      fullPath: '/admin/trash'
-      preLoaderRoute: typeof AdminTrashRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
-    '/admin/tags': {
-      id: '/admin/tags'
-      path: '/tags'
-      fullPath: '/admin/tags'
-      preLoaderRoute: typeof AdminTagsRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
-    '/admin/models': {
-      id: '/admin/models'
-      path: '/models'
-      fullPath: '/admin/models'
-      preLoaderRoute: typeof AdminModelsRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/agencies': {
@@ -617,6 +540,83 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAlbumsRouteRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/models': {
+      id: '/admin/models'
+      path: '/models'
+      fullPath: '/admin/models'
+      preLoaderRoute: typeof AdminModelsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/tags': {
+      id: '/admin/tags'
+      path: '/tags'
+      fullPath: '/admin/tags'
+      preLoaderRoute: typeof AdminTagsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/trash': {
+      id: '/admin/trash'
+      path: '/trash'
+      fullPath: '/admin/trash'
+      preLoaderRoute: typeof AdminTrashRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/albums/': {
+      id: '/albums/'
+      path: '/albums'
+      fullPath: '/albums/'
+      preLoaderRoute: typeof AlbumsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/albums/$albumSlug': {
+      id: '/albums/$albumSlug'
+      path: '/albums/$albumSlug'
+      fullPath: '/albums/$albumSlug'
+      preLoaderRoute: typeof AlbumsAlbumSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/$': {
+      id: '/api/$'
+      path: '/api/$'
+      fullPath: '/api/$'
+      preLoaderRoute: typeof ApiSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo/better-auth': {
+      id: '/demo/better-auth'
+      path: '/demo/better-auth'
+      fullPath: '/demo/better-auth'
+      preLoaderRoute: typeof DemoBetterAuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo/drizzle': {
+      id: '/demo/drizzle'
+      path: '/demo/drizzle'
+      fullPath: '/demo/drizzle'
+      preLoaderRoute: typeof DemoDrizzleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo/orpc-todo': {
+      id: '/demo/orpc-todo'
+      path: '/demo/orpc-todo'
+      fullPath: '/demo/orpc-todo'
+      preLoaderRoute: typeof DemoOrpcTodoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo/table': {
+      id: '/demo/table'
+      path: '/demo/table'
+      fullPath: '/demo/table'
+      preLoaderRoute: typeof DemoTableRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo/tanstack-query': {
+      id: '/demo/tanstack-query'
+      path: '/demo/tanstack-query'
+      fullPath: '/demo/tanstack-query'
+      preLoaderRoute: typeof DemoTanstackQueryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/albums/': {
       id: '/admin/albums/'
       path: '/'
@@ -624,25 +624,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAlbumsIndexRouteImport
       parentRoute: typeof AdminAlbumsRouteRoute
     }
-    '/demo/form/simple': {
-      id: '/demo/form/simple'
-      path: '/demo/form/simple'
-      fullPath: '/demo/form/simple'
-      preLoaderRoute: typeof DemoFormSimpleRouteImport
-      parentRoute: typeof rootRouteImport
+    '/admin/albums/$albumId': {
+      id: '/admin/albums/$albumId'
+      path: '/$albumId'
+      fullPath: '/admin/albums/$albumId'
+      preLoaderRoute: typeof AdminAlbumsAlbumIdRouteImport
+      parentRoute: typeof AdminAlbumsRouteRoute
     }
-    '/demo/form/address': {
-      id: '/demo/form/address'
-      path: '/demo/form/address'
-      fullPath: '/demo/form/address'
-      preLoaderRoute: typeof DemoFormAddressRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/rpc/$': {
-      id: '/api/rpc/$'
-      path: '/api/rpc/$'
-      fullPath: '/api/rpc/$'
-      preLoaderRoute: typeof ApiRpcSplatRouteImport
+    '/api/assets/$': {
+      id: '/api/assets/$'
+      path: '/api/assets/$'
+      fullPath: '/api/assets/$'
+      preLoaderRoute: typeof ApiAssetsSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/auth/$': {
@@ -652,19 +645,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/assets/$': {
-      id: '/api/assets/$'
-      path: '/api/assets/$'
-      fullPath: '/api/assets/$'
-      preLoaderRoute: typeof ApiAssetsSplatRouteImport
+    '/api/rpc/$': {
+      id: '/api/rpc/$'
+      path: '/api/rpc/$'
+      fullPath: '/api/rpc/$'
+      preLoaderRoute: typeof ApiRpcSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/albums/$albumId': {
-      id: '/admin/albums/$albumId'
-      path: '/$albumId'
-      fullPath: '/admin/albums/$albumId'
-      preLoaderRoute: typeof AdminAlbumsAlbumIdRouteImport
-      parentRoute: typeof AdminAlbumsRouteRoute
+    '/demo/form/address': {
+      id: '/demo/form/address'
+      path: '/demo/form/address'
+      fullPath: '/demo/form/address'
+      preLoaderRoute: typeof DemoFormAddressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo/form/simple': {
+      id: '/demo/form/simple'
+      path: '/demo/form/simple'
+      fullPath: '/demo/form/simple'
+      preLoaderRoute: typeof DemoFormSimpleRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/admin/images/upload': {
       id: '/api/admin/images/upload'
@@ -673,25 +673,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminImagesUploadRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/admin/models/avatar/upload': {
-      id: '/api/admin/models/avatar/upload'
-      path: '/api/admin/models/avatar/upload'
-      fullPath: '/api/admin/models/avatar/upload'
-      preLoaderRoute: typeof ApiAdminModelsAvatarUploadRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/admin/models/avatar/delete': {
-      id: '/api/admin/models/avatar/delete'
-      path: '/api/admin/models/avatar/delete'
-      fullPath: '/api/admin/models/avatar/delete'
-      preLoaderRoute: typeof ApiAdminModelsAvatarDeleteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/admin/images/upload/prepare': {
-      id: '/api/admin/images/upload/prepare'
-      path: '/prepare'
-      fullPath: '/api/admin/images/upload/prepare'
-      preLoaderRoute: typeof ApiAdminImagesUploadPrepareRouteImport
+    '/api/admin/images/upload/cancel': {
+      id: '/api/admin/images/upload/cancel'
+      path: '/cancel'
+      fullPath: '/api/admin/images/upload/cancel'
+      preLoaderRoute: typeof ApiAdminImagesUploadCancelRouteImport
       parentRoute: typeof ApiAdminImagesUploadRoute
     }
     '/api/admin/images/upload/complete': {
@@ -701,25 +687,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminImagesUploadCompleteRouteImport
       parentRoute: typeof ApiAdminImagesUploadRoute
     }
-    '/api/admin/images/upload/cancel': {
-      id: '/api/admin/images/upload/cancel'
-      path: '/cancel'
-      fullPath: '/api/admin/images/upload/cancel'
-      preLoaderRoute: typeof ApiAdminImagesUploadCancelRouteImport
+    '/api/admin/images/upload/prepare': {
+      id: '/api/admin/images/upload/prepare'
+      path: '/prepare'
+      fullPath: '/api/admin/images/upload/prepare'
+      preLoaderRoute: typeof ApiAdminImagesUploadPrepareRouteImport
       parentRoute: typeof ApiAdminImagesUploadRoute
     }
-    '/api/admin/models/avatar/upload/prepare': {
-      id: '/api/admin/models/avatar/upload/prepare'
-      path: '/prepare'
-      fullPath: '/api/admin/models/avatar/upload/prepare'
-      preLoaderRoute: typeof ApiAdminModelsAvatarUploadPrepareRouteImport
-      parentRoute: typeof ApiAdminModelsAvatarUploadRoute
+    '/api/admin/models/avatar/delete': {
+      id: '/api/admin/models/avatar/delete'
+      path: '/api/admin/models/avatar/delete'
+      fullPath: '/api/admin/models/avatar/delete'
+      preLoaderRoute: typeof ApiAdminModelsAvatarDeleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/models/avatar/upload': {
+      id: '/api/admin/models/avatar/upload'
+      path: '/api/admin/models/avatar/upload'
+      fullPath: '/api/admin/models/avatar/upload'
+      preLoaderRoute: typeof ApiAdminModelsAvatarUploadRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/admin/models/avatar/upload/complete': {
       id: '/api/admin/models/avatar/upload/complete'
       path: '/complete'
       fullPath: '/api/admin/models/avatar/upload/complete'
       preLoaderRoute: typeof ApiAdminModelsAvatarUploadCompleteRouteImport
+      parentRoute: typeof ApiAdminModelsAvatarUploadRoute
+    }
+    '/api/admin/models/avatar/upload/prepare': {
+      id: '/api/admin/models/avatar/upload/prepare'
+      path: '/prepare'
+      fullPath: '/api/admin/models/avatar/upload/prepare'
+      preLoaderRoute: typeof ApiAdminModelsAvatarUploadPrepareRouteImport
       parentRoute: typeof ApiAdminModelsAvatarUploadRoute
     }
   }
