@@ -42,10 +42,10 @@ function ExplorePage() {
     <main className='page-wrap px-4 pb-16 pt-10'>
       <section className='mb-10 flex flex-col gap-4'>
         <p className='island-kicker m-0'>Explore</p>
-        <h1 className='display-title m-0 text-5xl font-bold leading-none text-[var(--sea-ink)] sm:text-6xl'>
+        <h1 className='display-title m-0 text-5xl font-bold leading-none text-(--sea-ink) sm:text-6xl'>
           发现
         </h1>
-        <p className='m-0 max-w-2xl text-[var(--sea-ink-soft)] text-base leading-8'>
+        <p className='m-0 max-w-2xl text-(--sea-ink-soft) text-base leading-8'>
           标签、人物和机构把图库里的图片与专辑连接起来。
         </p>
       </section>
@@ -61,7 +61,7 @@ function ExplorePage() {
         <div className='grid gap-5 lg:grid-cols-3'>
           {skeletons.map((key) => (
             <Skeleton
-              className='h-80 rounded-md bg-[var(--surface-muted)]'
+              className='h-80 rounded-md bg-(--surface-muted)'
               key={key}
             />
           ))}
@@ -131,11 +131,11 @@ function ExplorePage() {
 
 function Metric({ label, value }: { label: string; value: number }) {
   return (
-    <article className='rounded-md border border-[var(--line)] bg-[var(--surface-strong)] p-5'>
-      <p className='m-0 text-[var(--sea-ink)] text-3xl font-bold'>
+    <article className='rounded-md border border-(--line) bg-(--surface-strong) p-5'>
+      <p className='m-0 text-(--sea-ink) text-3xl font-bold'>
         {value.toLocaleString('zh-CN')}
       </p>
-      <p className='m-0 mt-1 text-[var(--sea-ink-soft)] text-sm'>{label}</p>
+      <p className='m-0 mt-1 text-(--sea-ink-soft) text-sm'>{label}</p>
     </article>
   )
 }
@@ -150,12 +150,12 @@ function FacetPanel({
   title: string
 }) {
   return (
-    <section className='rounded-md border border-[var(--line)] bg-[var(--surface-strong)] p-4'>
-      <div className='mb-4 flex items-center gap-2 text-[var(--sea-ink)]'>
+    <section className='rounded-md border border-(--line) bg-(--surface-strong) p-4'>
+      <div className='mb-4 flex items-center gap-2 text-(--sea-ink)'>
         {icon}
         <h2 className='m-0 font-semibold text-lg'>{title}</h2>
       </div>
-      <div className='flex max-h-[34rem] flex-col gap-2 overflow-y-auto pr-1'>
+      <div className='flex max-h-136 flex-col gap-2 overflow-y-auto pr-1'>
         {children}
       </div>
     </section>

@@ -128,12 +128,12 @@ function AlbumDetailPage() {
   if (!album) {
     return (
       <main className='page-wrap px-4 pb-16 pt-10'>
-        <section className='grid min-h-96 place-items-center rounded-md border border-dashed border-[var(--line)] bg-[var(--surface-muted)] p-8 text-center'>
+        <section className='grid min-h-96 place-items-center rounded-md border border-dashed border-(--line) bg-(--surface-muted) p-8 text-center'>
           <div className='flex max-w-sm flex-col items-center gap-4'>
-            <span className='grid size-12 place-items-center rounded-md bg-[var(--accent-soft)] text-[var(--accent-strong)]'>
+            <span className='grid size-12 place-items-center rounded-md bg-(--accent-soft) text-(--accent-strong)'>
               <FolderOpen aria-hidden='true' />
             </span>
-            <h1 className='m-0 font-semibold text-[var(--sea-ink)] text-2xl'>
+            <h1 className='m-0 font-semibold text-(--sea-ink) text-2xl'>
               专辑未找到
             </h1>
             <Button
@@ -166,9 +166,9 @@ function AlbumDetailPage() {
       </div>
 
       <section className='mb-8 grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-end'>
-        <div className='overflow-hidden rounded-md border border-[var(--line)] bg-[var(--surface-strong)]'>
+        <div className='overflow-hidden rounded-md border border-(--line) bg-(--surface-strong)'>
           <div
-            className='aspect-[4/3] bg-[var(--surface-muted)]'
+            className='aspect-4/3 bg-(--surface-muted)'
             style={{
               background: album.coverImage?.dominantColors?.[0] ?? undefined,
             }}
@@ -180,7 +180,7 @@ function AlbumDetailPage() {
                 src={album.coverImage.thumbnailUrl}
               />
             ) : (
-              <span className='grid h-full place-items-center text-[var(--sea-ink-soft)]'>
+              <span className='grid h-full place-items-center text-(--sea-ink-soft)'>
                 <FolderOpen aria-hidden='true' />
               </span>
             )}
@@ -195,18 +195,18 @@ function AlbumDetailPage() {
               <Badge variant='outline'>{album.agency.name}</Badge>
             ) : null}
           </div>
-          <h1 className='display-title m-0 text-5xl font-bold leading-none text-[var(--sea-ink)] sm:text-6xl'>
+          <h1 className='display-title m-0 text-5xl font-bold leading-none text-(--sea-ink) sm:text-6xl'>
             {album.name}
           </h1>
           {album.description ? (
-            <p className='m-0 max-w-2xl text-[var(--sea-ink-soft)] text-base leading-8'>
+            <p className='m-0 max-w-2xl text-(--sea-ink-soft) text-base leading-8'>
               {album.description}
             </p>
           ) : null}
         </div>
       </section>
 
-      <section className='mb-8 rounded-md border border-[var(--line)] bg-[var(--surface-strong)] p-3'>
+      <section className='mb-8 rounded-md border border-(--line) bg-(--surface-strong) p-3'>
         <div className='grid gap-3 lg:grid-cols-[minmax(240px,1fr)_170px_170px_170px_auto]'>
           <form
             className='relative'
@@ -215,9 +215,9 @@ function AlbumDetailPage() {
               updateSearch({ q: query.trim() || undefined })
             }}
           >
-            <Search className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--sea-ink-soft)]' />
+            <Search className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-(--sea-ink-soft)' />
             <Input
-              className='h-10 bg-[var(--surface-muted)] pl-10'
+              className='h-10 bg-(--surface-muted) pl-10'
               onChange={(event) => setQuery(event.target.value)}
               placeholder='搜索专辑内图片'
               type='search'
@@ -237,7 +237,7 @@ function AlbumDetailPage() {
             }}
             value={search.sort}
           >
-            <SelectTrigger className='h-10 bg-[var(--surface-muted)]'>
+            <SelectTrigger className='h-10 bg-(--surface-muted)'>
               <SelectValue placeholder='排序' />
             </SelectTrigger>
             <SelectContent>
@@ -258,7 +258,7 @@ function AlbumDetailPage() {
             }
             value={search.tagId ?? ALL_VALUE}
           >
-            <SelectTrigger className='h-10 bg-[var(--surface-muted)]'>
+            <SelectTrigger className='h-10 bg-(--surface-muted)'>
               <SelectValue placeholder='标签' />
             </SelectTrigger>
             <SelectContent>
@@ -285,7 +285,7 @@ function AlbumDetailPage() {
             }
             value={search.modelId ?? ALL_VALUE}
           >
-            <SelectTrigger className='h-10 bg-[var(--surface-muted)]'>
+            <SelectTrigger className='h-10 bg-(--surface-muted)'>
               <SelectValue placeholder='人物' />
             </SelectTrigger>
             <SelectContent>

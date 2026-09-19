@@ -111,15 +111,15 @@ function AlbumsPage() {
     <main className='page-wrap px-4 pb-16 pt-10'>
       <section className='mb-8 flex flex-col gap-4'>
         <p className='island-kicker m-0'>Albums</p>
-        <h1 className='display-title m-0 text-5xl font-bold leading-none text-[var(--sea-ink)] sm:text-6xl'>
+        <h1 className='display-title m-0 text-5xl font-bold leading-none text-(--sea-ink) sm:text-6xl'>
           全部专辑
         </h1>
-        <p className='m-0 max-w-2xl text-[var(--sea-ink-soft)] text-base leading-8'>
+        <p className='m-0 max-w-2xl text-(--sea-ink-soft) text-base leading-8'>
           以专辑为单位翻阅成组图片，保留每组内容自己的节奏。
         </p>
       </section>
 
-      <section className='mb-8 rounded-md border border-[var(--line)] bg-[var(--surface-strong)] p-3'>
+      <section className='mb-8 rounded-md border border-(--line) bg-(--surface-strong) p-3'>
         <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]'>
           <form
             className='relative'
@@ -128,9 +128,9 @@ function AlbumsPage() {
               updateSearch({ q: query.trim() || undefined })
             }}
           >
-            <Search className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--sea-ink-soft)]' />
+            <Search className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-(--sea-ink-soft)' />
             <Input
-              className='h-10 bg-[var(--surface-muted)] pl-10'
+              className='h-10 bg-(--surface-muted) pl-10'
               onChange={(event) => setQuery(event.target.value)}
               placeholder='搜索专辑或机构'
               type='search'
@@ -152,7 +152,7 @@ function AlbumsPage() {
             }
             value={search.agencyId ?? ALL_VALUE}
           >
-            <SelectTrigger className='h-10 bg-[var(--surface-muted)]'>
+            <SelectTrigger className='h-10 bg-(--surface-muted)'>
               <SelectValue placeholder='机构' />
             </SelectTrigger>
             <SelectContent>
@@ -172,15 +172,15 @@ function AlbumsPage() {
       {albumsQuery.isLoading ? (
         <AlbumGridSkeleton />
       ) : albums.length === 0 ? (
-        <div className='grid min-h-80 place-items-center rounded-md border border-dashed border-[var(--line)] bg-[var(--surface-muted)] p-8 text-center'>
+        <div className='grid min-h-80 place-items-center rounded-md border border-dashed border-(--line) bg-(--surface-muted) p-8 text-center'>
           <div className='flex max-w-sm flex-col items-center gap-3'>
-            <span className='grid size-12 place-items-center rounded-md bg-[var(--accent-soft)] text-[var(--accent-strong)]'>
+            <span className='grid size-12 place-items-center rounded-md bg-(--accent-soft) text-(--accent-strong)'>
               <FolderOpen aria-hidden='true' />
             </span>
-            <h2 className='m-0 font-semibold text-[var(--sea-ink)] text-lg'>
+            <h2 className='m-0 font-semibold text-(--sea-ink) text-lg'>
               暂无专辑
             </h2>
-            <p className='m-0 text-sm text-[var(--sea-ink-soft)]'>
+            <p className='m-0 text-sm text-(--sea-ink-soft)'>
               当前筛选条件下没有专辑
             </p>
           </div>
@@ -205,7 +205,7 @@ function AlbumsPage() {
                 {albumsQuery.isFetchingNextPage ? '加载中' : '加载更多'}
               </Button>
             ) : (
-              <p className='m-0 text-sm text-[var(--sea-ink-soft)]'>
+              <p className='m-0 text-sm text-(--sea-ink-soft)'>
                 已展示全部 {total} 个专辑
               </p>
             )}
@@ -220,14 +220,14 @@ function AlbumCard({ album }: { album: PublicAlbum }) {
   const color = album.coverImage?.dominantColors?.[0] ?? 'var(--surface-muted)'
 
   return (
-    <article className='group overflow-hidden rounded-md border border-[var(--line)] bg-[var(--surface-strong)] shadow-[0_16px_38px_rgba(27,34,46,0.08)]'>
+    <article className='group overflow-hidden rounded-md border border-(--line) bg-(--surface-strong) shadow-[0_16px_38px_rgba(27,34,46,0.08)]'>
       <Link
         className='block no-underline'
         params={{ albumSlug: album.slug }}
         to='/albums/$albumSlug'
       >
         <span
-          className='relative block aspect-[4/3] overflow-hidden'
+          className='relative block aspect-4/3 overflow-hidden'
           style={{ background: color }}
         >
           {album.coverImage ? (
@@ -238,7 +238,7 @@ function AlbumCard({ album }: { album: PublicAlbum }) {
               src={album.coverImage.thumbnailUrl}
             />
           ) : (
-            <span className='grid h-full place-items-center text-[var(--sea-ink-soft)]'>
+            <span className='grid h-full place-items-center text-(--sea-ink-soft)'>
               <FolderOpen aria-hidden='true' />
             </span>
           )}
@@ -248,7 +248,7 @@ function AlbumCard({ album }: { album: PublicAlbum }) {
         </span>
         <span className='flex flex-col gap-2 p-4'>
           <span className='flex items-start justify-between gap-3'>
-            <span className='line-clamp-2 font-semibold text-[var(--sea-ink)] text-lg leading-6'>
+            <span className='line-clamp-2 font-semibold text-(--sea-ink) text-lg leading-6'>
               {album.name}
             </span>
           </span>
@@ -258,7 +258,7 @@ function AlbumCard({ album }: { album: PublicAlbum }) {
             </Badge>
           ) : null}
           {album.description ? (
-            <span className='line-clamp-2 text-[var(--sea-ink-soft)] text-sm leading-6'>
+            <span className='line-clamp-2 text-(--sea-ink-soft) text-sm leading-6'>
               {album.description}
             </span>
           ) : null}
@@ -277,7 +277,7 @@ function AlbumGridSkeleton() {
     <div className='grid gap-5 sm:grid-cols-2 lg:grid-cols-3'>
       {skeletons.map((item) => (
         <Skeleton
-          className='h-72 rounded-md bg-[var(--surface-muted)]'
+          className='h-72 rounded-md bg-(--surface-muted)'
           key={item.key}
         />
       ))}

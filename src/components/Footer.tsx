@@ -11,12 +11,10 @@ export default function Footer() {
   const year = new Date().getFullYear()
 
   return (
-    <footer className='site-footer px-4 pb-14 pt-10 text-[var(--sea-ink-soft)]'>
+    <footer className='site-footer px-4 pb-14 pt-10 text-(--sea-ink-soft)'>
       <div className='page-wrap flex flex-col justify-between gap-6 sm:flex-row sm:items-center'>
         <div>
-          <p className='m-0 font-semibold text-[var(--sea-ink)]'>
-            Kite Gallery
-          </p>
+          <p className='m-0 font-semibold text-(--sea-ink)'>Kite Gallery</p>
           <p className='m-0 mt-1 text-sm'>&copy; {year} Kite Gallery.</p>
         </div>
         <nav className='flex flex-wrap gap-4 text-sm font-semibold'>

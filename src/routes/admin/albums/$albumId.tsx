@@ -267,7 +267,7 @@ function AlbumMasonryCard({
             <div
               className={cn(
                 'grid w-full place-items-center bg-background text-muted-foreground text-xs',
-                'aspect-[3/4]',
+                'aspect-3/4',
               )}
             >
               无预览

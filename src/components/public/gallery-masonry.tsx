@@ -92,15 +92,15 @@ export function GalleryMasonry({
 
   if (items.length === 0 && !isLoadingMore) {
     return (
-      <div className='grid min-h-80 place-items-center rounded-md border border-dashed border-[var(--line)] bg-[var(--surface-muted)] p-8 text-center'>
+      <div className='grid min-h-80 place-items-center rounded-md border border-dashed border-(--line) bg-(--surface-muted) p-8 text-center'>
         <div className='flex max-w-sm flex-col items-center gap-3'>
-          <span className='grid size-12 place-items-center rounded-md bg-[var(--accent-soft)] text-[var(--accent-strong)]'>
+          <span className='grid size-12 place-items-center rounded-md bg-(--accent-soft) text-(--accent-strong)'>
             <ImageIcon aria-hidden='true' />
           </span>
-          <h2 className='m-0 font-semibold text-[var(--sea-ink)] text-lg'>
+          <h2 className='m-0 font-semibold text-(--sea-ink) text-lg'>
             {emptyTitle}
           </h2>
-          <p className='m-0 text-sm text-[var(--sea-ink-soft)]'>
+          <p className='m-0 text-sm text-(--sea-ink-soft)'>
             {emptyDescription}
           </p>
         </div>
@@ -139,7 +139,7 @@ export function GalleryMasonry({
             {isLoadingMore ? '加载中' : '加载更多'}
           </Button>
         ) : (
-          <p className='m-0 text-sm text-[var(--sea-ink-soft)]'>
+          <p className='m-0 text-sm text-(--sea-ink-soft)'>
             已展示全部 {total} 张
           </p>
         )}
@@ -169,7 +169,7 @@ function GalleryMasonryCard({
 
   return (
     <article
-      className='group overflow-hidden rounded-md border border-[var(--line)] bg-[var(--surface-strong)] shadow-[0_14px_36px_rgba(27,34,46,0.08)]'
+      className='group overflow-hidden rounded-md border border-(--line) bg-(--surface-strong) shadow-[0_14px_36px_rgba(27,34,46,0.08)]'
       style={{ width }}
     >
       <button
@@ -192,7 +192,7 @@ function GalleryMasonryCard({
               width={image.width ?? undefined}
             />
           ) : (
-            <span className='grid aspect-[4/5] place-items-center text-[var(--sea-ink-soft)]'>
+            <span className='grid aspect-4/5 place-items-center text-(--sea-ink-soft)'>
               <ImageIcon aria-hidden='true' />
             </span>
           )}
@@ -203,7 +203,7 @@ function GalleryMasonryCard({
       </button>
       <div className='flex flex-col gap-2 p-3'>
         <div className='flex items-start justify-between gap-3'>
-          <h3 className='m-0 min-w-0 font-semibold text-[var(--sea-ink)] text-sm leading-5'>
+          <h3 className='m-0 min-w-0 font-semibold text-(--sea-ink) text-sm leading-5'>
             <button
               className='line-clamp-2 border-0 bg-transparent p-0 text-left text-inherit'
               onClick={() => onOpen(image)}
@@ -215,7 +215,7 @@ function GalleryMasonryCard({
         </div>
         {showAlbumLink && image.album ? (
           <Link
-            className='truncate text-[var(--accent-strong)] text-xs font-semibold no-underline hover:underline'
+            className='truncate text-(--accent-strong) text-xs font-semibold no-underline hover:underline'
             params={{ albumSlug: image.album.slug }}
             to='/albums/$albumSlug'
           >
@@ -249,7 +249,7 @@ function ImagePreviewDialog({
 }) {
   return (
     <Dialog onOpenChange={onOpenChange} open={Boolean(image)}>
-      <DialogContent className='max-h-[calc(100vh-2rem)] overflow-y-auto bg-[var(--surface-strong)] p-0 sm:max-w-5xl'>
+      <DialogContent className='max-h-[calc(100vh-2rem)] overflow-y-auto bg-(--surface-strong) p-0 sm:max-w-5xl'>
         {image ? (
           <div className='grid gap-0 lg:grid-cols-[minmax(0,1fr)_300px]'>
             <div className='grid min-h-80 place-items-center bg-[#101318]'>
@@ -262,7 +262,7 @@ function ImagePreviewDialog({
             </div>
             <aside className='flex flex-col gap-4 p-5'>
               <div className='flex flex-col gap-2'>
-                <DialogTitle className='text-[var(--sea-ink)] text-xl leading-7'>
+                <DialogTitle className='text-(--sea-ink) text-xl leading-7'>
                   {image.title}
                 </DialogTitle>
                 <DialogDescription>
@@ -272,7 +272,7 @@ function ImagePreviewDialog({
               </div>
               {image.album ? (
                 <Link
-                  className='inline-flex min-h-9 items-center justify-center rounded-md border border-[var(--line)] bg-[var(--surface-muted)] px-3 font-semibold text-[var(--sea-ink)] text-sm no-underline transition hover:bg-[var(--accent-soft)]'
+                  className='inline-flex min-h-9 items-center justify-center rounded-md border border-(--line) bg-(--surface-muted) px-3 font-semibold text-(--sea-ink) text-sm no-underline transition hover:bg-(--accent-soft)'
                   params={{ albumSlug: image.album.slug }}
                   to='/albums/$albumSlug'
                 >
@@ -290,7 +290,7 @@ function ImagePreviewDialog({
               ) : null}
               {image.models.length > 0 ? (
                 <div className='flex flex-col gap-2'>
-                  <p className='m-0 text-[var(--sea-ink-soft)] text-xs font-semibold uppercase'>
+                  <p className='m-0 text-(--sea-ink-soft) text-xs font-semibold uppercase'>
                     出镜
                   </p>
                   <div className='flex flex-wrap gap-2'>
@@ -305,7 +305,7 @@ function ImagePreviewDialog({
                 </div>
               ) : null}
               <a
-                className='mt-auto inline-flex min-h-9 items-center justify-center gap-2 rounded-md bg-[var(--sea-ink)] px-3 font-semibold text-sm text-white no-underline transition hover:bg-[var(--accent-strong)]'
+                className='mt-auto inline-flex min-h-9 items-center justify-center gap-2 rounded-md bg-(--sea-ink) px-3 font-semibold text-sm text-white no-underline transition hover:bg-(--accent-strong)'
                 href={image.originalUrl}
                 rel='noreferrer'
                 target='_blank'
@@ -331,7 +331,7 @@ export function GallerySkeleton({ count = 12 }: { count?: number }) {
     <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
       {skeletons.map((item) => (
         <Skeleton
-          className='rounded-md bg-[var(--surface-muted)]'
+          className='rounded-md bg-(--surface-muted)'
           key={item.key}
           style={{ height: item.height }}
         />

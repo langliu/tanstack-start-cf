@@ -119,21 +119,21 @@ function ImagesPage() {
       <section className='mb-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end'>
         <div className='flex flex-col gap-4'>
           <p className='island-kicker m-0'>Random Flow</p>
-          <h1 className='display-title m-0 max-w-3xl text-5xl font-bold leading-none text-[var(--sea-ink)] sm:text-6xl'>
+          <h1 className='display-title m-0 max-w-3xl text-5xl font-bold leading-none text-(--sea-ink) sm:text-6xl'>
             随机浏览所有图片
           </h1>
-          <p className='m-0 max-w-2xl text-[var(--sea-ink-soft)] text-base leading-8'>
+          <p className='m-0 max-w-2xl text-(--sea-ink-soft) text-base leading-8'>
             不同尺寸、颜色和主题在同一条瀑布流里交错出现。
           </p>
         </div>
-        <div className='grid grid-cols-3 gap-3 rounded-md border border-[var(--line)] bg-[var(--surface-strong)] p-4'>
+        <div className='grid grid-cols-3 gap-3 rounded-md border border-(--line) bg-(--surface-strong) p-4'>
           <Stat label='图片' value={statsQuery.data?.images ?? total} />
           <Stat label='标签' value={statsQuery.data?.tags ?? 0} />
           <Stat label='专辑' value={statsQuery.data?.albums ?? 0} />
         </div>
       </section>
 
-      <section className='mb-8 rounded-md border border-[var(--line)] bg-[var(--surface-strong)] p-4 shadow-[0_1px_0_var(--inset-glint)_inset,0_16px_36px_rgba(27,34,46,0.06)]'>
+      <section className='mb-8 rounded-md border border-(--line) bg-(--surface-strong) p-4 shadow-[0_1px_0_var(--inset-glint)_inset,0_16px_36px_rgba(27,34,46,0.06)]'>
         <div className='grid items-center gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(20rem,1fr)_7.5rem_10rem_10rem_minmax(8.5rem,auto)]'>
           <form
             className='relative min-w-0 sm:col-span-2 lg:col-span-1'
@@ -142,9 +142,9 @@ function ImagesPage() {
               updateSearch({ q: query.trim() || undefined })
             }}
           >
-            <Search className='pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[var(--sea-ink-soft)]' />
+            <Search className='pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-(--sea-ink-soft)' />
             <Input
-              className='h-11 rounded-md bg-[var(--surface-muted)] pl-11'
+              className='h-11 rounded-md bg-(--surface-muted) pl-11'
               onChange={(event) => setQuery(event.target.value)}
               placeholder='搜索标题、专辑、机构'
               type='search'
@@ -164,7 +164,7 @@ function ImagesPage() {
             }}
             value={search.sort}
           >
-            <SelectTrigger className='!h-11 w-full rounded-md bg-[var(--surface-muted)]'>
+            <SelectTrigger className='h-11! w-full rounded-md bg-(--surface-muted)'>
               <SelectValue placeholder='排序' />
             </SelectTrigger>
             <SelectContent>
@@ -185,7 +185,7 @@ function ImagesPage() {
             }
             value={search.tagId ?? ALL_VALUE}
           >
-            <SelectTrigger className='!h-11 w-full rounded-md bg-[var(--surface-muted)]'>
+            <SelectTrigger className='h-11! w-full rounded-md bg-(--surface-muted)'>
               <SelectValue placeholder='标签' />
             </SelectTrigger>
             <SelectContent>
@@ -212,7 +212,7 @@ function ImagesPage() {
             }
             value={search.modelId ?? ALL_VALUE}
           >
-            <SelectTrigger className='!h-11 w-full rounded-md bg-[var(--surface-muted)]'>
+            <SelectTrigger className='h-11! w-full rounded-md bg-(--surface-muted)'>
               <SelectValue placeholder='人物' />
             </SelectTrigger>
             <SelectContent>
@@ -264,10 +264,10 @@ function ImagesPage() {
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className='min-w-0'>
-      <p className='m-0 text-[var(--sea-ink)] text-2xl font-bold'>
+      <p className='m-0 text-(--sea-ink) text-2xl font-bold'>
         {value.toLocaleString('zh-CN')}
       </p>
-      <p className='m-0 text-[var(--sea-ink-soft)] text-xs'>{label}</p>
+      <p className='m-0 text-(--sea-ink-soft) text-xs'>{label}</p>
     </div>
   )
 }
