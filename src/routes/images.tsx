@@ -1,5 +1,9 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  type SearchSchemaInput,
+  useNavigate,
+} from '@tanstack/react-router'
 import { Search, Shuffle } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import {
@@ -23,6 +27,14 @@ const PAGE_SIZE = 48
 const ALL_VALUE = '__all__'
 const SORT_VALUES = ['random', 'latest', 'top'] as const
 type ImageSort = (typeof SORT_VALUES)[number]
+
+type ImagesSearchInput = {
+  modelId?: string
+  q?: string
+  seed?: string
+  sort?: string
+  tagId?: string
+}
 
 type ImagesSearch = {
   modelId?: string
@@ -52,7 +64,7 @@ export const Route = createFileRoute('/images')({
     ])
   },
   validateSearch: (
-    search: Record<string, string | undefined>,
+    search: ImagesSearchInput & SearchSchemaInput,
   ): ImagesSearch => ({
     modelId: cleanSearchValue(search.modelId),
     q: cleanSearchValue(search.q),
@@ -75,14 +87,14 @@ function ImagesPage() {
 
   const facetsQuery = useQuery(orpc.gallery.facets.queryOptions({ input: {} }))
   const statsQuery = useQuery(orpc.gallery.stats.queryOptions({ input: {} }))
-  const imagesQuery = useInfiniteQuery({
-    getNextPageParam: (lastPage) => {
-      const nextOffset = lastPage.offset + lastPage.items.length
-      return nextOffset < lastPage.total ? nextOffset : undefined
-    },
-    initialPageParam: 0,
-    queryFn: ({ pageParam }) =>
-      orpc.gallery.images.list.call({
+  const imagesQuery = useInfiniteQuery(
+    orpc.gallery.images.list.infiniteOptions({
+      getNextPageParam: (lastPage) => {
+        const nextOffset = lastPage.offset + lastPage.items.length
+        return nextOffset < lastPage.total ? nextOffset : undefined
+      },
+      initialPageParam: 0,
+      input: (pageParam: number) => ({
         limit: PAGE_SIZE,
         modelId: search.modelId,
         offset: pageParam,
@@ -91,8 +103,8 @@ function ImagesPage() {
         sort: search.sort,
         tagId: search.tagId,
       }),
-    queryKey: ['gallery', 'images', search],
-  })
+    }),
+  )
 
   const images = useMemo(
     () =>
@@ -181,7 +193,9 @@ function ImagesPage() {
               ...tags.map((tag) => ({ label: tag.name, value: tag.id })),
             ]}
             onValueChange={(value) =>
-              updateSearch({ tagId: value === ALL_VALUE ? undefined : value })
+              updateSearch({
+                tagId: !value || value === ALL_VALUE ? undefined : value,
+              })
             }
             value={search.tagId ?? ALL_VALUE}
           >
@@ -208,7 +222,9 @@ function ImagesPage() {
               })),
             ]}
             onValueChange={(value) =>
-              updateSearch({ modelId: value === ALL_VALUE ? undefined : value })
+              updateSearch({
+                modelId: !value || value === ALL_VALUE ? undefined : value,
+              })
             }
             value={search.modelId ?? ALL_VALUE}
           >

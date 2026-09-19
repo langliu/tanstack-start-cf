@@ -1,5 +1,10 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Link,
+  type SearchSchemaInput,
+  useNavigate,
+} from '@tanstack/react-router'
 import { FolderOpen, Search } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Badge } from '#/components/ui/badge'
@@ -18,6 +23,11 @@ import { orpc } from '#/orpc/client'
 
 const PAGE_SIZE = 36
 const ALL_VALUE = '__all__'
+
+type AlbumsSearchInput = {
+  agencyId?: string
+  q?: string
+}
 
 type AlbumsSearch = {
   agencyId?: string
@@ -56,7 +66,7 @@ export const Route = createFileRoute('/albums/')({
     )
   },
   validateSearch: (
-    search: Record<string, string | undefined>,
+    search: AlbumsSearchInput & SearchSchemaInput,
   ): AlbumsSearch => ({
     agencyId: cleanSearchValue(search.agencyId),
     q: cleanSearchValue(search.q),
@@ -73,21 +83,21 @@ function AlbumsPage() {
   }, [search.q])
 
   const facetsQuery = useQuery(orpc.gallery.facets.queryOptions({ input: {} }))
-  const albumsQuery = useInfiniteQuery({
-    getNextPageParam: (lastPage) => {
-      const nextOffset = lastPage.offset + lastPage.items.length
-      return nextOffset < lastPage.total ? nextOffset : undefined
-    },
-    initialPageParam: 0,
-    queryFn: ({ pageParam }) =>
-      orpc.gallery.albums.list.call({
+  const albumsQuery = useInfiniteQuery(
+    orpc.gallery.albums.list.infiniteOptions({
+      getNextPageParam: (lastPage) => {
+        const nextOffset = lastPage.offset + lastPage.items.length
+        return nextOffset < lastPage.total ? nextOffset : undefined
+      },
+      initialPageParam: 0,
+      input: (pageParam: number) => ({
         agencyId: search.agencyId,
         limit: PAGE_SIZE,
         offset: pageParam,
         q: search.q,
       }),
-    queryKey: ['gallery', 'albums', search],
-  })
+    }),
+  )
   const albums = useMemo(
     () =>
       (albumsQuery.data?.pages.flatMap((page) => page.items) ??
@@ -147,7 +157,7 @@ function AlbumsPage() {
             ]}
             onValueChange={(value) =>
               updateSearch({
-                agencyId: value === ALL_VALUE ? undefined : value,
+                agencyId: !value || value === ALL_VALUE ? undefined : value,
               })
             }
             value={search.agencyId ?? ALL_VALUE}

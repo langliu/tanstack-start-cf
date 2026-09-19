@@ -66,14 +66,15 @@ export function GalleryMasonry({
   const [previewImage, setPreviewImage] = useState<PublicGalleryImage | null>(
     null,
   )
-  const maybeLoadMore = useInfiniteLoader<PublicGalleryImage>(
+  const maybeLoadMore = useInfiniteLoader(
     useCallback(() => {
       if (hasMore && !isLoadingMore) {
         onLoadMore()
       }
     }, [hasMore, isLoadingMore, onLoadMore]),
     {
-      isItemLoaded: (index, currentItems) => Boolean(currentItems[index]),
+      isItemLoaded: (index, currentItems: PublicGalleryImage[]) =>
+        Boolean(currentItems[index]),
       minimumBatchSize: 24,
       threshold: 18,
       totalItems: total,

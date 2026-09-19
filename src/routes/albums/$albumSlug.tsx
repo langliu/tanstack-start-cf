@@ -1,5 +1,10 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Link,
+  type SearchSchemaInput,
+  useNavigate,
+} from '@tanstack/react-router'
 import { ArrowLeft, FolderOpen, Search } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import {
@@ -24,6 +29,14 @@ const PAGE_SIZE = 48
 const ALL_VALUE = '__all__'
 const SORT_VALUES = ['latest', 'random', 'top'] as const
 type AlbumImageSort = (typeof SORT_VALUES)[number]
+
+type AlbumSearchInput = {
+  modelId?: string
+  q?: string
+  seed?: string
+  sort?: string
+  tagId?: string
+}
 
 type AlbumSearch = {
   modelId?: string
@@ -50,7 +63,7 @@ export const Route = createFileRoute('/albums/$albumSlug')({
     )
   },
   validateSearch: (
-    search: Record<string, string | undefined>,
+    search: AlbumSearchInput & SearchSchemaInput,
   ): AlbumSearch => ({
     modelId: cleanSearchValue(search.modelId),
     q: cleanSearchValue(search.q),
@@ -77,15 +90,15 @@ function AlbumDetailPage() {
       input: { slug: albumSlug },
     }),
   )
-  const imagesQuery = useInfiniteQuery({
-    enabled: Boolean(albumQuery.data),
-    getNextPageParam: (lastPage) => {
-      const nextOffset = lastPage.offset + lastPage.items.length
-      return nextOffset < lastPage.total ? nextOffset : undefined
-    },
-    initialPageParam: 0,
-    queryFn: ({ pageParam }) =>
-      orpc.gallery.images.list.call({
+  const imagesQuery = useInfiniteQuery(
+    orpc.gallery.images.list.infiniteOptions({
+      enabled: Boolean(albumQuery.data),
+      getNextPageParam: (lastPage) => {
+        const nextOffset = lastPage.offset + lastPage.items.length
+        return nextOffset < lastPage.total ? nextOffset : undefined
+      },
+      initialPageParam: 0,
+      input: (pageParam: number) => ({
         albumSlug,
         limit: PAGE_SIZE,
         modelId: search.modelId,
@@ -95,8 +108,8 @@ function AlbumDetailPage() {
         sort: search.sort,
         tagId: search.tagId,
       }),
-    queryKey: ['gallery', 'album-images', albumSlug, search],
-  })
+    }),
+  )
   const album = albumQuery.data
   const images = useMemo(
     () =>
@@ -254,7 +267,9 @@ function AlbumDetailPage() {
               ...tags.map((tag) => ({ label: tag.name, value: tag.id })),
             ]}
             onValueChange={(value) =>
-              updateSearch({ tagId: value === ALL_VALUE ? undefined : value })
+              updateSearch({
+                tagId: !value || value === ALL_VALUE ? undefined : value,
+              })
             }
             value={search.tagId ?? ALL_VALUE}
           >
@@ -281,7 +296,9 @@ function AlbumDetailPage() {
               })),
             ]}
             onValueChange={(value) =>
-              updateSearch({ modelId: value === ALL_VALUE ? undefined : value })
+              updateSearch({
+                modelId: !value || value === ALL_VALUE ? undefined : value,
+              })
             }
             value={search.modelId ?? ALL_VALUE}
           >
